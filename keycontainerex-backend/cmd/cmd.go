@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"KeyContainerEx/log"
+	"KeyContainerEx/storage"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -11,6 +12,7 @@ import (
 
 var (
 	defaultStoragePath = ""
+	activeStorage      *storage.Storage
 )
 
 const (
@@ -31,14 +33,19 @@ var rootCmd = &cobra.Command{
 		}
 		exist, err := checkInit(storagePath)
 		if err != nil {
-			fmt.Println("failed to check init:", err)
+			log.Fatalln("failed to check init:", err)
 		}
 		if !exist {
-			err = initialize(storagePath)
+			activeStorage, err = initialize(storagePath)
 			if err != nil {
+				log.FatalPrintln(err)
+			}
+			fmt.Println(activeStorage.FilePath)
+			err = activeStorage.Save()
+			if err != nil {
+				log.Errorln("failed to save storage", err)
 			}
 		}
-		fmt.Println("root cmd persist pre run. exist =", exist)
 	},
 }
 
@@ -47,10 +54,8 @@ var addCmd = &cobra.Command{
 	Short: "add password",
 	PreRun: func(cmd *cobra.Command, args []string) {
 
-		fmt.Println("add cmd pre run")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("add cmd run")
 
 	},
 }
@@ -117,16 +122,25 @@ func Run() {
 		confDirPath := fmt.Sprintf("%s/KeyContainerEx", userConfDir)
 		tmpDir, err := os.Stat(confDirPath)
 		if os.IsNotExist(err) {
-			if err = os.Mkdir(confDirPath, 0755); err != nil {
+			if err = os.Mkdir(confDirPath, 0700); err != nil {
 				log.Fatalln("failed to create config dir:", err)
+			}
+			if err = os.Mkdir(fmt.Sprintf("%s/storage", confDirPath), 0700); err != nil {
+				log.Fatalln("failed to create config storage dir:", err)
 			}
 		} else if err == nil || os.IsExist(err) {
 			if !tmpDir.IsDir() {
 				if err = os.Remove(confDirPath); err != nil {
 					log.Fatalln("failed to remove config file:", err)
 				}
-				if err = os.Mkdir(confDirPath, 0755); err != nil {
+				if err = os.Mkdir(confDirPath, 0700); err != nil {
 					log.Fatalln("failed to create config directory:", err)
+				}
+			}
+			storagePath := fmt.Sprintf("%s/storage", confDirPath)
+			if _, err := os.Stat(storagePath); os.IsNotExist(err) {
+				if err = os.Mkdir(storagePath, 0700); err != nil {
+					log.Fatalln("failed to create config storage dir:", err)
 				}
 			}
 		} else {
@@ -136,7 +150,7 @@ func Run() {
 	}
 
 	if err := rootCmd.Execute(); err != nil {
-		_, _ = fmt.Fprint(os.Stderr, err)
+		log.Fatalln("failed to execute root command:", err)
 		os.Exit(1)
 	}
 }

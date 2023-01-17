@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"KeyContainerEx/log"
+	"KeyContainerEx/storage"
 	"fmt"
 	"golang.org/x/crypto/ssh/terminal"
 	"os"
@@ -28,22 +29,23 @@ func checkInit(storagePath string) (bool, error) {
 	return false, err
 }
 
-func initialize(storagePath string) error {
+func initialize(storagePath string) (*storage.Storage, error) {
 	fmt.Println("Initializing storage...")
 	fmt.Println("Input storage password:")
 	pw, err := terminal.ReadPassword(stdin)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Println("Confirm storage password:")
 	cpw, err := terminal.ReadPassword(stdin)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	spw := string(pw)
 	scpw := string(cpw)
 	if spw != scpw {
 		log.FatalPrintln("password and confirm password not the same, exit")
 	}
-	return nil
+
+	return storage.NewStorage(storagePath), nil
 }
