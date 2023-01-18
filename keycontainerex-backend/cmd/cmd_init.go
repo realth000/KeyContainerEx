@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"KeyContainerEx/log"
+	"KeyContainerEx/secure"
 	"KeyContainerEx/storage"
 	"fmt"
+	"github.com/realth000/ToGoTool/crypto/hash"
 	"golang.org/x/crypto/ssh/terminal"
 	"os"
 )
@@ -47,5 +49,7 @@ func initialize(storagePath string) (*storage.Storage, error) {
 		log.FatalPrintln("password and confirm password not the same, exit")
 	}
 
+	mainPassword := secure.NewMainPassword(spw, hash.SumSHA3_512)
+	fmt.Printf("AAAAA get main password hash:%0x\n", mainPassword.GetHash())
 	return storage.NewStorage(storagePath), nil
 }
