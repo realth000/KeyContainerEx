@@ -32,6 +32,9 @@ func Debugln(args ...any) {
 }
 
 func DebugPrintln(args ...any) {
+	if logger.Level > logrus.DebugLevel {
+		return
+	}
 	fmt.Println(args...)
 	Debugln(args)
 }
@@ -41,6 +44,9 @@ func Debugf(format string, args ...any) {
 }
 
 func DebugPrintf(format string, args ...any) {
+	if logger.Level > logrus.DebugLevel {
+		return
+	}
 	fmt.Printf(format, args...)
 	Debugf(format, args)
 }
@@ -50,6 +56,9 @@ func Infoln(args ...any) {
 }
 
 func InfoPrintln(args ...any) {
+	if logger.Level > logrus.InfoLevel {
+		return
+	}
 	fmt.Println(args...)
 	Infoln(args)
 }
@@ -59,6 +68,9 @@ func Infof(format string, args ...any) {
 }
 
 func InfoPrintf(format string, args ...any) {
+	if logger.Level > logrus.InfoLevel {
+		return
+	}
 	fmt.Printf(format, args...)
 	Infof(format, args)
 }
@@ -68,7 +80,11 @@ func Errorln(args ...any) {
 }
 
 func ErrorPrintln(args ...any) {
+	if logger.Level > logrus.ErrorLevel {
+		return
+	}
 	_, _ = fmt.Fprintln(os.Stderr, args...)
+	Errorln(args)
 }
 
 func Errorf(format string, args ...any) {
@@ -76,6 +92,9 @@ func Errorf(format string, args ...any) {
 }
 
 func ErrorPrintf(format string, args ...any) {
+	if logger.Level > logrus.ErrorLevel {
+		return
+	}
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
 	Errorf(format, args)
 }
@@ -85,6 +104,9 @@ func Fatalln(args ...any) {
 }
 
 func FatalPrintln(args ...any) {
+	if logger.Level > logrus.FatalLevel {
+		return
+	}
 	_, _ = fmt.Fprintln(os.Stderr, args...)
 	Fatalln(args)
 }
@@ -94,6 +116,9 @@ func Fatalf(format string, args ...any) {
 }
 
 func FatalPrintf(format string, args ...any) {
+	if logger.Level > logrus.FatalLevel {
+		return
+	}
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
 	Fatalf(format, args)
 }
@@ -103,6 +128,9 @@ func Panicln(args ...any) {
 }
 
 func PanicPrintln(args ...any) {
+	if logger.Level > logrus.PanicLevel {
+		return
+	}
 	_, _ = fmt.Fprintln(os.Stderr, args...)
 	Panicln(args)
 }
@@ -112,14 +140,23 @@ func Panicf(format string, args ...any) {
 }
 
 func PanicPrintf(format string, args ...any) {
+	if logger.Level > logrus.PanicLevel {
+		return
+	}
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
 	Panicf(format, args)
 }
 
 func DryErrorln(args ...any) {
+	if logger.Level > logrus.ErrorLevel {
+		return
+	}
 	_, _ = fmt.Fprintln(os.Stderr, args...)
 }
 
 func DryErrorf(format string, args ...any) {
+	if logger.Level > logrus.ErrorLevel {
+		return
+	}
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
 }
