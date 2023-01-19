@@ -69,7 +69,7 @@ func (s *Storage) makePasswordSection() []byte {
 			default:
 				continue
 			}
-			_ = binary.Write(buffer, binary.LittleEndian, int64(length))
+			_ = binary.Write(buffer, binary.LittleEndian, uint32(length))
 			buffer.Write(fieldValueBytes)
 		}
 		buffer.WriteByte(passwordSplit)
