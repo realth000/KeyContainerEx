@@ -1,7 +1,11 @@
 package storage
 
 import (
-	"os"
+	"KeyContainerEx/secure"
+)
+
+var (
+	MagicHeader = []byte{0x4B, 0x43, 0x45, 0x58}
 )
 
 /*
@@ -14,28 +18,20 @@ import (
 */
 
 type Storage struct {
-	FilePath string
-	KeyHash  []byte
-	Password []*Password
+	FilePath     string
+	MainPassword *secure.MainPassword
+	Password     []*secure.Password
 }
 
-func NewStorage(storagePath string) *Storage {
+func NewStorage(storagePath string, password *secure.MainPassword) *Storage {
+	return &Storage{
+		FilePath:     storagePath,
+		MainPassword: password,
+	}
+}
+
+func NewEmptyStorage(storagePath string) *Storage {
 	return &Storage{
 		FilePath: storagePath,
 	}
-}
-
-func (s *Storage) Save() error {
-	_, err := os.Stat(s.FilePath)
-	if !os.IsNotExist(err) {
-		if err = os.Remove(s.FilePath); err != nil {
-			return err
-		}
-	}
-	var data []byte
-	data = append(data, []byte{0x4B, 0x43, 0x45, 0x58}...)
-	if err = os.WriteFile(s.FilePath, data, 0600); err != nil {
-		return err
-	}
-	return nil
 }

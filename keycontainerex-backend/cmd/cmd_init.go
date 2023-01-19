@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"github.com/realth000/ToGoTool/crypto/hash"
 	"golang.org/x/crypto/ssh/terminal"
+	"io"
 	"os"
+	"reflect"
 )
 
 const (
@@ -19,14 +21,27 @@ func checkInit(storagePath string) (bool, error) {
 		return false, fmt.Errorf("empty storage path")
 	}
 	info, err := os.Stat(storagePath)
-	if err == nil || os.IsExist(err) {
+	if os.IsNotExist(err) {
+		return false, nil
+	} else if err == nil || os.IsExist(err) {
 		if info.IsDir() {
 			return false, fmt.Errorf("not a file: %s", storagePath)
 		}
 		// Validate storage.
+		f, err := os.Open(storagePath)
+		if err != nil {
+			return false, fmt.Errorf("failed to open storage: %w", err)
+		}
+		defer f.Close()
+		storageHeader := make([]byte, len(storage.MagicHeader))
+		_, err = io.ReadFull(f, storageHeader)
+		if err != nil {
+			return false, fmt.Errorf("failed to check storage header: %w", err)
+		}
+		if !reflect.DeepEqual(storageHeader, storage.MagicHeader) {
+			return false, fmt.Errorf("invalid storage header: %0x", storageHeader)
+		}
 		return true, nil
-	} else if os.IsNotExist(err) {
-		return false, nil
 	}
 	return false, err
 }
@@ -51,5 +66,5 @@ func initialize(storagePath string) (*storage.Storage, error) {
 
 	mainPassword := secure.NewMainPassword(spw, hash.SumSHA3_512)
 	fmt.Printf("AAAAA get main password hash:%0x\n", mainPassword.GetHash())
-	return storage.NewStorage(storagePath), nil
+	return storage.NewStorage(storagePath, mainPassword), nil
 }

@@ -45,6 +45,12 @@ var rootCmd = &cobra.Command{
 			if err != nil {
 				log.Errorln("failed to save storage", err)
 			}
+		} else {
+			activeStorage = storage.NewEmptyStorage(storagePath)
+			err = activeStorage.Load()
+			if err != nil {
+				log.Fatalln("failed to load storage", err)
+			}
 		}
 	},
 }
