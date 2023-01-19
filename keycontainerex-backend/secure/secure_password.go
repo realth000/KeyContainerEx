@@ -2,9 +2,8 @@ package secure
 
 import (
 	"fmt"
-	aes "github.com/realth000/ToGoTool/crypto/aes"
-	hash "github.com/realth000/ToGoTool/crypto/hash"
-	slice "github.com/realth000/ToGoTool/slice"
+	"github.com/realth000/ToGoTool/crypto/aes"
+	"github.com/realth000/ToGoTool/slice"
 	"strconv"
 	"time"
 )
@@ -18,10 +17,9 @@ type PasswordStorage struct {
 }
 
 type PasswordOption struct {
-	HashType hash.SumType
-	AESKey   []byte
-	AESType  aes.Type
-	AESMode  aes.Mode
+	AESType aes.Type
+	AESMode aes.Mode
+	aesKey  []byte
 }
 
 // Password stores all password related encrypted data.
@@ -32,7 +30,6 @@ type Password struct {
 	comment          []byte
 	createdTime      []byte
 	lastModifiedTime []byte
-	hash             []byte
 }
 
 func (p *Password) StorageData() PasswordStorage {
@@ -46,7 +43,7 @@ func (p *Password) StorageData() PasswordStorage {
 }
 
 func (p *Password) Password() (string, error) {
-	s, err := aes.Decrypt(p.Option.AESMode, p.Option.AESKey, p.password)
+	s, err := aes.Decrypt(p.Option.AESMode, p.Option.aesKey, p.password)
 	if err != nil {
 		return "", err
 	}
@@ -54,7 +51,6 @@ func (p *Password) Password() (string, error) {
 }
 
 func (p *Password) encrypt(account string, password string, comment string) error {
-	var err error
 	for _, v := range []struct {
 		plainText     string
 		cipherPointer *[]byte
@@ -80,21 +76,12 @@ func (p *Password) encrypt(account string, password string, comment string) erro
 			cipherPointer: &p.lastModifiedTime,
 		},
 	} {
-		*v.cipherPointer, err = aes.Encrypt(p.Option.AESMode, p.Option.AESKey, slice.ByteFromString(v.plainText))
+		var err error
+		*v.cipherPointer, err = aes.Encrypt(p.Option.AESMode, p.Option.aesKey, slice.ByteFromString(v.plainText))
 		if err != nil {
 			return fmt.Errorf("failed to encrypt for account %s: %w", account, err)
 		}
 	}
-	err = p.hashSum()
-	return err
-}
-
-func (p *Password) hashSum() error {
-	s, err := p.Password()
-	if err != nil {
-		return err
-	}
-	p.hash = hash.HashString(p.Option.HashType, s)
 	return nil
 }
 

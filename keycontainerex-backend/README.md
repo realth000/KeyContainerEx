@@ -144,3 +144,56 @@ All available config:
 * main
   - password: main config. *string*
   - path: database file path. *string*
+
+## Storage
+
+### Structure
+
+> In Go, ``byte``==``uint8``
+
+* Header: ``kcex`` **4 byte**
+* Version: *byte* **1 byte**
+* Main Password:
+  - Hash Type: *int8* **1 byte**
+  - Hash Length: *uint32* **4 byte**
+  - Hash Data. *[]byte*
+* Main Password Split: ``0xa1`` *byte* **1 byte**
+* Password 1
+  - Crypto Type: *int8* **1 byte**
+  - Crypto Mode: *int8* **1 byte**
+  - Account:
+    * Account Length: *uint32* **4 byte**
+    * Account Data. *[] byte*
+  - Password:
+    * Password Length: *uint32* **4 byte**
+    * Password Data. *[] byte*
+  - Comment:
+    * Comment Length: *uint32* **4 byte**
+    * Comment Data. *[] byte*
+  - Created Time:
+    * Time Length: *uint32* **
+    * Time Data. *[] byte**
+  - Last Modified TIme:
+    * Time Length: *uint32* **4 byte**
+    * Time Data. *[] byte*
+  - Password Split: ``0xa2`` *byte* **4 byte**
+* Password 2
+  - Crypto Type: *uint32* **4 byte**
+  - Crypto Mode: *int8* **1 byte**
+  - Account:
+    * Account Length: *uint32* **4 byte**
+    * Account Data. *[] byte*
+  - Password:
+    * Password Length: *uint32* **4 byte**
+    * Password Data. *[] byte*
+  - Comment:
+    * Comment Length: *uint32* **4 byte**
+    * Comment Data. *[] byte*
+  - Created Time:
+    * Time Length: *uint32* **4 byte**
+    * Time Data. *[] byte*
+  - Last Modified TIme:
+    * Time Length: *uint32* **4 byte**
+    * Time Data. *[] byte*
+  - Password Split: ``0xa2`` *byte* **1 byte**
+* EOF

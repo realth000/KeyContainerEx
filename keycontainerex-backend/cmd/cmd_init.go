@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"github.com/realth000/ToGoTool/crypto/hash"
 	"golang.org/x/crypto/ssh/terminal"
-	"io"
 	"os"
-	"reflect"
 )
 
 const (
@@ -28,18 +26,9 @@ func checkInit(storagePath string) (bool, error) {
 			return false, fmt.Errorf("not a file: %s", storagePath)
 		}
 		// Validate storage.
-		f, err := os.Open(storagePath)
+		err = storage.CheckStorage(storagePath)
 		if err != nil {
-			return false, fmt.Errorf("failed to open storage: %w", err)
-		}
-		defer f.Close()
-		storageHeader := make([]byte, len(storage.MagicHeader))
-		_, err = io.ReadFull(f, storageHeader)
-		if err != nil {
-			return false, fmt.Errorf("failed to check storage header: %w", err)
-		}
-		if !reflect.DeepEqual(storageHeader, storage.MagicHeader) {
-			return false, fmt.Errorf("invalid storage header: %0x", storageHeader)
+			return false, err
 		}
 		return true, nil
 	}

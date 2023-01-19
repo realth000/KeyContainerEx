@@ -24,3 +24,11 @@ func NewMainPassword(password string, hashType hash.SumType) *MainPassword {
 	m.UpdatePassword(password)
 	return &m
 }
+
+func NewMainPasswordWithHash(hash []byte, hashType hash.SumType) *MainPassword {
+	m := MainPassword{
+		HashType: hashType,
+		hash:     hash,
+	}
+	return &m
+}
