@@ -33,7 +33,7 @@ var rootCmd = &cobra.Command{
 		}
 		exist, err := checkInit(storagePath)
 		if err != nil {
-			log.Fatalln("failed to check init:", err)
+			log.FatalPrintln("failed to check init:", err)
 		}
 		if !exist {
 			activeStorage, err = initialize(storagePath)
@@ -43,13 +43,13 @@ var rootCmd = &cobra.Command{
 			fmt.Println(activeStorage.FilePath)
 			err = activeStorage.Save()
 			if err != nil {
-				log.Errorln("failed to save storage", err)
+				log.ErrorPrintln("failed to save storage", err)
 			}
 		} else {
 			activeStorage = storage.NewEmptyStorage(storagePath)
 			err = activeStorage.Load()
 			if err != nil {
-				log.Fatalln("failed to load storage", err)
+				log.FatalPrintln("failed to load storage", err)
 			}
 		}
 	},
