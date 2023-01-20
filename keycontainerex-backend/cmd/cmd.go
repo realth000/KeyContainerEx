@@ -51,6 +51,10 @@ var rootCmd = &cobra.Command{
 			if err != nil {
 				log.FatalPrintln("failed to load storage", err)
 			}
+			err = activeStorage.MainPassword.RequireMainPassword()
+			if err != nil {
+				log.FatalPrintln("failed to login:", err)
+			}
 		}
 	},
 }

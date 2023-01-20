@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"KeyContainerEx/common"
 	"KeyContainerEx/log"
 	"KeyContainerEx/secure"
 	"KeyContainerEx/storage"
@@ -11,7 +12,7 @@ import (
 )
 
 const (
-	stdin = 0
+	stdin = common.Stdin
 )
 
 func checkInit(storagePath string) (bool, error) {
@@ -37,16 +38,18 @@ func checkInit(storagePath string) (bool, error) {
 
 func initialize(storagePath string) (*storage.Storage, error) {
 	fmt.Println("Initializing storage...")
-	fmt.Println("Input storage password:")
+	fmt.Print("Input main password: ")
 	pw, err := terminal.ReadPassword(stdin)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Confirm storage password:")
+	fmt.Println("")
+	fmt.Print("Confirm main password: ")
 	cpw, err := terminal.ReadPassword(stdin)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("")
 	spw := string(pw)
 	scpw := string(cpw)
 	if spw != scpw {
