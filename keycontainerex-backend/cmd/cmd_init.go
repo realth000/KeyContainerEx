@@ -5,9 +5,9 @@ import (
 	"KeyContainerEx/log"
 	"KeyContainerEx/secure"
 	"KeyContainerEx/storage"
+	"KeyContainerEx/util"
 	"fmt"
 	"github.com/realth000/ToGoTool/crypto/hash"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 )
 
@@ -38,18 +38,14 @@ func checkInit(storagePath string) (bool, error) {
 
 func initialize(storagePath string) (*storage.Storage, error) {
 	fmt.Println("Initializing storage...")
-	fmt.Print("Input main password: ")
-	pw, err := terminal.ReadPassword(stdin)
+	pw, err := util.ReadPassword("Input main password: ")
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("")
-	fmt.Print("Confirm main password: ")
-	cpw, err := terminal.ReadPassword(stdin)
+	cpw, err := util.ReadPassword("Confirm main password: ")
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("")
 	spw := string(pw)
 	scpw := string(cpw)
 	if spw != scpw {
