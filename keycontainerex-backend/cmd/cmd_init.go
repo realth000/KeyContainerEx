@@ -46,13 +46,11 @@ func initialize(storagePath string) (*storage.Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	spw := string(pw)
-	scpw := string(cpw)
-	if spw != scpw {
+	if pw != cpw {
 		log.FatalPrintln("password and confirm password not the same, exit")
 	}
 
-	mainPassword := secure.NewMainPassword(spw, hash.SumSHA3_512)
-	fmt.Printf("AAAAA get main password hash:%0x\n", mainPassword.GetHash())
-	return storage.NewStorage(storagePath, mainPassword), nil
+	mainPassword := secure.NewMainPassword(pw, hash.SumSHA3_512)
+	//fmt.Printf("AAAAA get main password hash:%0x\n", mainPassword.GetHash())
+	return storage.NewStorage(storagePath, mainPassword)
 }

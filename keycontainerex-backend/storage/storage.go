@@ -2,6 +2,8 @@ package storage
 
 import (
 	"KeyContainerEx/secure"
+	"errors"
+	"fmt"
 	"github.com/realth000/ToGoTool/crypto/aes"
 	"github.com/realth000/ToGoTool/crypto/hash"
 )
@@ -46,6 +48,7 @@ var (
 	version           = byte(0x01)
 	mainPasswordSplit = byte(0xa1)
 	passwordSplit     = byte(0xa2)
+	safeEOF           = errors.New("EOF(safely finished)")
 )
 
 /*
@@ -60,18 +63,41 @@ var (
 type Storage struct {
 	FilePath     string
 	MainPassword *secure.MainPassword
-	Password     []*secure.Password
+	Password     map[string]*secure.Password
+	passwordKey  []byte
 }
 
-func NewStorage(storagePath string, password *secure.MainPassword) *Storage {
+func (s *Storage) AddPassword(password *secure.Password) error {
+	if password == nil {
+		return fmt.Errorf("nil password")
+	}
+	account, err := password.Account()
+	if err != nil {
+		return fmt.Errorf("failed to get password account: %w", err)
+	}
+	if _, ok := s.Password[account]; ok {
+		return fmt.Errorf("account already exists")
+	}
+	s.Password[account] = password
+	return nil
+}
+
+func NewStorage(storagePath string, password *secure.MainPassword) (*Storage, error) {
+	k, err := aes.GenerateAESKeyFromBytes(password.GetHash(), aes.Type256)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate AES key from main password: %w", err)
+	}
 	return &Storage{
 		FilePath:     storagePath,
 		MainPassword: password,
-	}
+		Password:     make(map[string]*secure.Password),
+		passwordKey:  k,
+	}, nil
 }
 
 func NewEmptyStorage(storagePath string) *Storage {
 	return &Storage{
 		FilePath: storagePath,
+		Password: make(map[string]*secure.Password),
 	}
 }

@@ -31,8 +31,8 @@ func (s *Storage) makeMainPasswordSection() []byte {
 	//buffer.WriteString(strconv.FormatInt(int64(s.MainPassword.HashType), 10))
 	_ = binary.Write(buffer, binary.LittleEndian, int8(s.MainPassword.HashType))
 	_ = binary.Write(buffer, binary.LittleEndian, uint32(len(hashValue)))
-	buffer.Write(hashValue)
-	buffer.WriteByte(mainPasswordSplit)
+	_ = binary.Write(buffer, binary.LittleEndian, hashValue)
+	_ = binary.Write(buffer, binary.LittleEndian, mainPasswordSplit)
 	return buffer.Bytes()
 }
 
@@ -70,9 +70,10 @@ func (s *Storage) makePasswordSection() []byte {
 				continue
 			}
 			_ = binary.Write(buffer, binary.LittleEndian, uint32(length))
-			buffer.Write(fieldValueBytes)
+			_ = binary.Write(buffer, binary.LittleEndian, fieldValueBytes)
+			//fmt.Printf("%0x\n", fieldValueBytes)
 		}
-		buffer.WriteByte(passwordSplit)
+		_ = binary.Write(buffer, binary.LittleEndian, passwordSplit)
 	}
 	return buffer.Bytes()
 }

@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"KeyContainerEx/log"
+	"KeyContainerEx/secure"
 	"KeyContainerEx/storage"
+	"KeyContainerEx/util"
 	"fmt"
+	"github.com/realth000/ToGoTool/crypto/aes"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
@@ -63,10 +66,45 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "add password",
 	PreRun: func(cmd *cobra.Command, args []string) {
-
+		err := activeStorage.MainPassword.RequireMainPassword()
+		if err != nil {
+			log.FatalPrintln("failed to login:", err)
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-
+		var account, password, comment string
+		var err error
+		var pw *secure.Password
+		fmt.Println("Add password")
+		account, err = util.ReadStdinln("Input account: ")
+		if err != nil {
+			log.FatalPrintln("failed to read account from stdin:", err)
+		}
+		password, err = util.ReadPassword("Input password: ")
+		if err != nil {
+			log.FatalPrintln("failed to read password from stdin:", err)
+		}
+		comment, err = util.ReadStdinln("Input comment: ")
+		if err != nil {
+			log.FatalPrintln("failed to read comment from stdin:", err)
+		}
+		if account == "" || password == "" || comment == "" {
+			log.FatalPrintln("can not add password: empty account, password or comment")
+		}
+		pw, err = secure.NewPassword(account, password, comment, *secure.NewPasswordOption(
+			aes.Type256,
+			aes.ModeCFB,
+			activeStorage.MainPassword.GetHash(),
+		))
+		if err != nil {
+			log.FatalPrintln("failed to add password:", err)
+		}
+		if err = activeStorage.AddPassword(pw); err != nil {
+			log.FatalPrintln("failed to add password:", err)
+		}
+		if err = activeStorage.Save(); err != nil {
+			log.FatalPrintln("failed to save storage:", err)
+		}
 	},
 }
 
