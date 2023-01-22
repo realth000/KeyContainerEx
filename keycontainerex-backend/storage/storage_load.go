@@ -140,13 +140,6 @@ func (s *Storage) loadPassword(f *os.File) error {
 		if err = readPart(f, &accountData, "account data", nil); err != nil {
 			return err
 		}
-		if err = readPart(f, &passwordLength, "password length", nil); err != nil {
-			return err
-		}
-		passwordData = make([]byte, passwordLength)
-		if err = readPart(f, &passwordData, "password data", nil); err != nil {
-			return err
-		}
 		if err = readPart(f, &commentLength, "comment length", nil); err != nil {
 			return err
 		}
@@ -154,6 +147,14 @@ func (s *Storage) loadPassword(f *os.File) error {
 		if err = readPart(f, &commentData, "comment data", nil); err != nil {
 			return err
 		}
+		if err = readPart(f, &passwordLength, "password length", nil); err != nil {
+			return err
+		}
+		passwordData = make([]byte, passwordLength)
+		if err = readPart(f, &passwordData, "password data", nil); err != nil {
+			return err
+		}
+
 		if err = readPart(f, &createdTimeLength, "createdTime length", nil); err != nil {
 			return err
 		}
