@@ -70,21 +70,21 @@ KeyContainerEx show test
 > Last Modified Time: 2023-01-02  00:01:00 UTF+8
 
 # Show info with given glob
-KeyContainerEx show t*
+KeyContainerEx show "t*"
 > Account: test
 > Comment: comment for account test
 > Add Time: 2023-01-01 00:00:00 UTF+8
 > Last Modified Time: 2023-01-02  00:01:00 UTF+8
 
 # Show info with given regular expression
-KeyContainerEx show -e "t.+"
+KeyContainerEx show -E "t.+"
 ...
 
-# Show info with given account
+# Show info, search in account
 KeyContainerEx show -a comment
 > No match found
 
-# Show info with given comment
+# Show info, search in comment
 KeyContainerEx show -c comment
 > Account: test
 > Comment: comment for account test
@@ -171,8 +171,8 @@ All available config:
     * Comment Length: *uint32* **4 byte**
     * Comment Data. *[] byte*
   - Created Time:
-    * Time Length: *uint32* **
-    * Time Data. *[] byte**
+    * Time Length: *uint32*
+    * Time Data. *[] byte*
   - Last Modified TIme:
     * Time Length: *uint32* **4 byte**
     * Time Data. *[] byte*
