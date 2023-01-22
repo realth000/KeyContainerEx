@@ -17,6 +17,11 @@ import (
 var (
 	defaultStoragePath = ""
 	activeStorage      *storage.Storage
+
+	showAccount   bool
+	showPassword  bool
+	showComment   bool
+	showUseRegexp bool
 )
 
 const (
@@ -55,9 +60,11 @@ var rootCmd = &cobra.Command{
 			if err != nil {
 				log.FatalPrintln("failed to load storage", err)
 			}
-			err = activeStorage.MainPassword.RequireMainPassword()
-			if err != nil {
-				log.FatalPrintln("failed to login:", err)
+			if false {
+				err = activeStorage.MainPassword.RequireMainPassword()
+				if err != nil {
+					log.FatalPrintln("failed to login:", err)
+				}
 			}
 		}
 	},
@@ -67,9 +74,11 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "add password",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		err := activeStorage.MainPassword.RequireMainPassword()
-		if err != nil {
-			log.FatalPrintln("failed to login:", err)
+		if false {
+			err := activeStorage.MainPassword.RequireMainPassword()
+			if err != nil {
+				log.FatalPrintln("failed to login:", err)
+			}
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -120,8 +129,39 @@ var removeCmd = &cobra.Command{
 var showCmd = &cobra.Command{
 	Use:   "show",
 	Short: "show password for given account",
+	Args: func(cmd *cobra.Command, args []string) error {
+		// Actually when user use no args, there will be an empty string in args.
+		// So this len == 0 should not happen, but check this to prevent bugs.
+		if len(args) == 0 || args[0] == "" {
+			return fmt.Errorf("no search pattern provided")
+		}
+		// Default, search in account and comment.
+		if !showAccount && !showComment {
+			showAccount = true
+			showComment = true
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-
+		if false {
+			err := activeStorage.MainPassword.RequireMainPassword()
+			if err != nil {
+				log.FatalPrintln("failed to login:", err)
+			}
+		}
+		searchResult, err := activeStorage.Search(args[0], showAccount, showPassword, showComment)
+		if err != nil {
+			log.FatalPrintln(err)
+		}
+		if len(searchResult) == 0 {
+			return
+		}
+		for _, p := range searchResult {
+			// FIXME: There should be no error.
+			a, _ := p.Account()
+			c, _ := p.Comment()
+			fmt.Printf("Account:%s\nComment:%s\n", a, c)
+		}
 	},
 }
 
@@ -134,6 +174,11 @@ var configCmd = &cobra.Command{
 }
 
 func init() {
+	showCmd.Flags().BoolVarP(&showAccount, "account", "a", false, "search in account")
+	//showCmd.Flags().BoolVarP(&showPassword, "password", "p", false, "")
+	showCmd.Flags().BoolVarP(&showComment, "comment", "c", false, "search in comment")
+	showCmd.Flags().BoolVarP(&showUseRegexp, "regexp", "E", false, "use search pattern is regular expression")
+
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(removeCmd)
 	rootCmd.AddCommand(showCmd)

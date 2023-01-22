@@ -66,6 +66,14 @@ func (p *Password) Password() (string, error) {
 	return string(s), nil
 }
 
+func (p *Password) Comment() (string, error) {
+	c, err := aes.Decrypt(p.Option.AESMode, p.Option.aesKey, p.password)
+	if err != nil {
+		return "", err
+	}
+	return string(c), nil
+}
+
 func (p *Password) encrypt(account string, password string, comment string) error {
 	for _, v := range []struct {
 		plainText     string
