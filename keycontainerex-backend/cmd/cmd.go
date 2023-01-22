@@ -149,7 +149,13 @@ var showCmd = &cobra.Command{
 				log.FatalPrintln("failed to login:", err)
 			}
 		}
-		searchResult, err := activeStorage.Search(args[0], showAccount, showPassword, showComment)
+		var searchResult []*secure.Password
+		var err error
+		if showUseRegexp {
+			searchResult, err = activeStorage.SearchRegexp(args[0], showAccount, showPassword, showComment)
+		} else {
+			searchResult, err = activeStorage.Search(args[0], showAccount, showPassword, showComment)
+		}
 		if err != nil {
 			log.FatalPrintln(err)
 		}
