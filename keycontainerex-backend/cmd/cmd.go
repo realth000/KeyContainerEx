@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"KeyContainerEx/core"
 	"KeyContainerEx/log"
 	"KeyContainerEx/secure"
 	"KeyContainerEx/storage"
@@ -34,12 +35,12 @@ var rootCmd = &cobra.Command{
 		if storagePath == "" {
 			storagePath = defaultStoragePath
 		}
-		exist, err := checkInit(storagePath)
+		exist, err := core.CheckInit(storagePath)
 		if err != nil {
 			log.FatalPrintln("failed to check init:", err)
 		}
 		if !exist {
-			activeStorage, err = initialize(storagePath)
+			activeStorage, err = core.Initialize(storagePath)
 			if err != nil {
 				log.FatalPrintln(err)
 			}

@@ -1,4 +1,4 @@
-package cmd
+package core
 
 import (
 	"KeyContainerEx/common"
@@ -15,7 +15,7 @@ const (
 	stdin = common.Stdin
 )
 
-func checkInit(storagePath string) (bool, error) {
+func CheckInit(storagePath string) (bool, error) {
 	if storagePath == "" {
 		return false, fmt.Errorf("empty storage path")
 	}
@@ -36,7 +36,7 @@ func checkInit(storagePath string) (bool, error) {
 	return false, err
 }
 
-func initialize(storagePath string) (*storage.Storage, error) {
+func Initialize(storagePath string) (*storage.Storage, error) {
 	fmt.Println("Initializing storage...")
 	pw, err := util.ReadPassword("Input main password: ")
 	if err != nil {
