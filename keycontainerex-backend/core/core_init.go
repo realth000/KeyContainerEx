@@ -1,7 +1,6 @@
 package core
 
 import (
-	"KeyContainerEx/common"
 	"KeyContainerEx/log"
 	"KeyContainerEx/secure"
 	"KeyContainerEx/storage"
@@ -9,10 +8,6 @@ import (
 	"fmt"
 	"github.com/realth000/ToGoTool/crypto/hash"
 	"os"
-)
-
-const (
-	stdin = common.Stdin
 )
 
 func CheckInit(storagePath string) (bool, error) {

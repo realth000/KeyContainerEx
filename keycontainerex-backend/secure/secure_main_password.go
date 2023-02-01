@@ -1,15 +1,10 @@
 package secure
 
 import (
-	"KeyContainerEx/common"
+	"KeyContainerEx/util"
 	"fmt"
 	"github.com/realth000/ToGoTool/crypto/hash"
-	"golang.org/x/crypto/ssh/terminal"
 	"reflect"
-)
-
-const (
-	stdin = common.Stdin
 )
 
 type MainPassword struct {
@@ -26,13 +21,12 @@ func (m *MainPassword) GetHash() []byte {
 }
 
 func (m *MainPassword) RequireMainPassword() error {
-	fmt.Print("Input main password: ")
-	pw, err := terminal.ReadPassword(stdin)
+	pw, err := util.ReadPassword("Input main password: ")
 	if err != nil {
 		return err
 	}
 	fmt.Println("")
-	if !reflect.DeepEqual(hash.Hash(m.HashType, pw), m.hash) {
+	if !reflect.DeepEqual(hash.HashString(m.HashType, pw), m.hash) {
 		return fmt.Errorf("main password not correct")
 	}
 	return nil

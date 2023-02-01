@@ -1,7 +1,6 @@
 package util
 
 import (
-	"KeyContainerEx/common"
 	"bufio"
 	"fmt"
 	"github.com/realth000/ToGoTool/slice"
@@ -12,7 +11,7 @@ import (
 
 func ReadPassword(hint string) (string, error) {
 	fmt.Print(hint)
-	pw, err := terminal.ReadPassword(common.Stdin)
+	pw, err := terminal.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
