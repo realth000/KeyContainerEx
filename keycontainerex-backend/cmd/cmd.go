@@ -84,7 +84,6 @@ var addCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var account, password, comment string
 		var err error
-		var pw *secure.Password
 		fmt.Println("Add password")
 		account, err = util.ReadStdinln("Input account: ")
 		if err != nil {
@@ -101,19 +100,13 @@ var addCmd = &cobra.Command{
 		if account == "" || password == "" || comment == "" {
 			log.FatalPrintln("can not add password: empty account, password or comment")
 		}
-		pw, err = secure.NewPassword(account, password, comment, *secure.NewPasswordOption(
+		err = core.AddPassword(activeStorage, account, password, comment, secure.NewPasswordOption(
 			aes.Type256,
 			aes.ModeCFB,
 			activeStorage.MainPassword.GetHash(),
 		))
 		if err != nil {
 			log.FatalPrintln("failed to add password:", err)
-		}
-		if err = activeStorage.AddPassword(pw); err != nil {
-			log.FatalPrintln("failed to add password:", err)
-		}
-		if err = activeStorage.Save(); err != nil {
-			log.FatalPrintln("failed to save storage:", err)
 		}
 	},
 }
