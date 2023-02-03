@@ -71,14 +71,14 @@ func (s *Storage) AddPassword(password *secure.Password) error {
 	if password == nil {
 		return fmt.Errorf("nil password")
 	}
-	account, err := password.Account()
+	id, err := password.Id()
 	if err != nil {
 		return fmt.Errorf("failed to get password account: %w", err)
 	}
-	if _, ok := s.Password[account]; ok {
+	if _, ok := s.Password[id]; ok {
 		return fmt.Errorf("account already exists")
 	}
-	s.Password[account] = password
+	s.Password[id] = password
 	return nil
 }
 

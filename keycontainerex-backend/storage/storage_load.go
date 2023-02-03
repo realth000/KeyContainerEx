@@ -118,8 +118,8 @@ func (s *Storage) loadPassword(f *os.File) error {
 	var err error
 	for {
 		var cryptoType, cryptoMode int8
-		var accountLength, passwordLength, commentLength, createdTimeLength, lastModifiedTimeLength uint32
-		var accountData, passwordData, commentData, createdTimeData, lastModifiedTimeData []byte
+		var idLength, accountLength, passwordLength, commentLength, createdTimeLength, lastModifiedTimeLength uint32
+		var idData, accountData, passwordData, commentData, createdTimeData, lastModifiedTimeData []byte
 		// TODO: Bad code.
 		if err = readPart(f, &cryptoType, "password crypto type",
 			func() bool { return cryptoType > int8(CryptoAES256) }); err != nil {
@@ -133,18 +133,18 @@ func (s *Storage) loadPassword(f *os.File) error {
 			func() bool { return cryptoMode > CryptoModeCTR }); err != nil {
 			return err
 		}
+		if err = readPart(f, &idLength, "id length", nil); err != nil {
+			return nil
+		}
+		idData = make([]byte, idLength)
+		if err = readPart(f, &idData, "id data", nil); err != nil {
+			return nil
+		}
 		if err = readPart(f, &accountLength, "account length", nil); err != nil {
 			return err
 		}
 		accountData = make([]byte, accountLength)
 		if err = readPart(f, &accountData, "account data", nil); err != nil {
-			return err
-		}
-		if err = readPart(f, &commentLength, "comment length", nil); err != nil {
-			return err
-		}
-		commentData = make([]byte, commentLength)
-		if err = readPart(f, &commentData, "comment data", nil); err != nil {
 			return err
 		}
 		if err = readPart(f, &passwordLength, "password length", nil); err != nil {
@@ -154,7 +154,13 @@ func (s *Storage) loadPassword(f *os.File) error {
 		if err = readPart(f, &passwordData, "password data", nil); err != nil {
 			return err
 		}
-
+		if err = readPart(f, &commentLength, "comment length", nil); err != nil {
+			return err
+		}
+		commentData = make([]byte, commentLength)
+		if err = readPart(f, &commentData, "comment data", nil); err != nil {
+			return err
+		}
 		if err = readPart(f, &createdTimeLength, "createdTime length", nil); err != nil {
 			return err
 		}
@@ -177,6 +183,7 @@ func (s *Storage) loadPassword(f *os.File) error {
 			return fmt.Errorf("broken storage: invalid boundary after password: %0x", split)
 		}
 		p, err := secure.NewPasswordFromHash(
+			idData,
 			accountData,
 			passwordData,
 			commentData,

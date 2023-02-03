@@ -1,6 +1,7 @@
 package secure
 
 import (
+	"KeyContainerEx/util"
 	"fmt"
 	"github.com/realth000/ToGoTool/crypto/aes"
 	"github.com/realth000/ToGoTool/slice"
@@ -9,6 +10,7 @@ import (
 )
 
 type PasswordStorage struct {
+	Id                []byte
 	Account           []byte
 	EncryptedPassword []byte
 	Comment           []byte
@@ -33,6 +35,7 @@ func NewPasswordOption(aesType aes.Type, aesMode aes.Mode, aesKey []byte) *Passw
 // Password stores all password related encrypted data.
 type Password struct {
 	Option           PasswordOption
+	id               []byte
 	account          []byte
 	password         []byte
 	comment          []byte
@@ -42,6 +45,7 @@ type Password struct {
 
 func (p *Password) StorageData() PasswordStorage {
 	return PasswordStorage{
+		Id:                p.id,
 		Account:           p.account,
 		EncryptedPassword: p.password,
 		Comment:           p.comment,
@@ -67,18 +71,30 @@ func (p *Password) Password() (string, error) {
 }
 
 func (p *Password) Comment() (string, error) {
-	c, err := aes.Decrypt(p.Option.AESMode, p.Option.aesKey, p.password)
+	c, err := aes.Decrypt(p.Option.AESMode, p.Option.aesKey, p.comment)
 	if err != nil {
 		return "", err
 	}
 	return string(c), nil
 }
 
-func (p *Password) encrypt(account string, password string, comment string) error {
+func (p *Password) Id() (string, error) {
+	id, err := aes.Decrypt(p.Option.AESMode, p.Option.aesKey, p.id)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (p *Password) encrypt(id, account, password, comment string) error {
 	for _, v := range []struct {
 		plainText     string
 		cipherPointer *[]byte
 	}{
+		{
+			plainText:     id,
+			cipherPointer: &p.id,
+		},
 		{
 			plainText:     account,
 			cipherPointer: &p.account,
@@ -112,6 +128,9 @@ func (p *Password) encrypt(account string, password string, comment string) erro
 func (p *Password) Validate() error {
 	var err error
 	//fmt.Printf("AAAA validate in mode %d, key=%0x\n", p.Option.AESMode, p.Option.aesKey)
+	if _, err = aes.Decrypt(p.Option.AESMode, p.Option.aesKey, p.id); err != nil {
+		return fmt.Errorf("invalid account: %w", err)
+	}
 	if _, err = aes.Decrypt(p.Option.AESMode, p.Option.aesKey, p.account); err != nil {
 		return fmt.Errorf("invalid account: %w", err)
 	}
@@ -150,7 +169,8 @@ func NewPassword(account string, password string, comment string, option Passwor
 		Option: option,
 	}
 
-	err = p.encrypt(account, password, comment)
+	err = p.encrypt(util.RandHashString(passwordIdLength), account, password, comment)
+
 	// fmt.Printf("type=%d, mode=%d, key=%0x\n", option.AESType, option.AESMode, option.aesKey)
 	// fmt.Printf("%0x\n", p.account)
 	// fmt.Printf("%0x\n", p.password)
@@ -164,6 +184,7 @@ func NewPassword(account string, password string, comment string, option Passwor
 }
 
 func NewPasswordFromHash(
+	id []byte,
 	accountHash []byte,
 	passwordHash []byte,
 	commentHash []byte,
@@ -173,6 +194,7 @@ func NewPasswordFromHash(
 ) (*Password, error) {
 	p := Password{
 		Option:           option,
+		id:               id,
 		account:          accountHash,
 		password:         passwordHash,
 		comment:          commentHash,

@@ -5,9 +5,17 @@ import (
 	"fmt"
 	"github.com/realth000/ToGoTool/slice"
 	"golang.org/x/crypto/ssh/terminal"
+	"math/rand"
 	"os"
 	"strings"
+	"time"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func ReadPassword(hint string) (string, error) {
 	fmt.Print(hint)
@@ -30,4 +38,12 @@ func ReadStdinln(hint string) (string, error) {
 		return "", err
 	}
 	return s, nil
+}
+
+func RandHashString(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }
