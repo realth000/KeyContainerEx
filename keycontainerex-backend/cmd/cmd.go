@@ -22,6 +22,8 @@ var (
 	showPassword  bool
 	showComment   bool
 	showUseRegexp bool
+
+	removeComment string
 )
 
 const (
@@ -115,7 +117,13 @@ var removeCmd = &cobra.Command{
 	Use:   "remove",
 	Short: "remove password",
 	Run: func(cmd *cobra.Command, args []string) {
-
+		err := core.RemovePassword(activeStorage, removeComment)
+		if err != nil {
+			log.FatalPrintln("failed to remove password:", err)
+		}
+		if err = activeStorage.Save(); err != nil {
+			log.FatalPrintln("failed to save storage after remove:", err)
+		}
 	},
 }
 
@@ -177,6 +185,8 @@ func init() {
 	//showCmd.Flags().BoolVarP(&showPassword, "password", "p", false, "")
 	showCmd.Flags().BoolVarP(&showComment, "comment", "c", false, "search in comment")
 	showCmd.Flags().BoolVarP(&showUseRegexp, "regexp", "E", false, "use search pattern is regular expression")
+
+	removeCmd.Flags().StringVarP(&removeComment, "comment", "c", "", "remove password by comment")
 
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(removeCmd)
