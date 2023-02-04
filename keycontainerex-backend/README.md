@@ -161,6 +161,9 @@ All available config:
 * Password 1
   - Crypto Type: *int8* **1 byte**
   - Crypto Mode: *int8* **1 byte**
+  - Id:
+    * Id Length: *uint32* **4 byte**
+    * Id Data: *[] byte*
   - Account:
     * Account Length: *uint32* **4 byte**
     * Account Data. *[] byte*
@@ -180,6 +183,9 @@ All available config:
 * Password 2
   - Crypto Type: *uint32* **4 byte**
   - Crypto Mode: *int8* **1 byte**
+  - Id:
+    * Id Length: *uint32* **4 byte**
+    * Id Data: *[] byte*
   - Account:
     * Account Length: *uint32* **4 byte**
     * Account Data. *[] byte*
