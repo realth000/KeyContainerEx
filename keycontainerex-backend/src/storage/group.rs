@@ -1,4 +1,4 @@
-use crate::storage::{collections::string_dictionary::StringDictionary, uuid::uuid};
+use crate::storage::{collections::string_dictionary::StringDictionary, uuid::Uuid};
 use chrono::{DateTime, Utc};
 use std::os::unix::raw::mode_t;
 use std::rc::Rc;
@@ -36,7 +36,7 @@ pub struct Group {
     pub enable_auto_type: Option<bool>,
     pub enable_searching: Option<bool>,
 
-    pub last_top_visible_entry: uuid,
+    pub last_top_visible_entry: Uuid,
 
     custom_data: StringDictionary,
 
@@ -44,7 +44,7 @@ pub struct Group {
     // TODO: Implement Touched here.
 
     // Methods implemented in fields
-    pub uuid: uuid,
+    pub uuid: Uuid,
 }
 
 impl Default for Group {
@@ -76,11 +76,11 @@ impl Default for Group {
             enable_auto_type: None,
             enable_searching: None,
 
-            last_top_visible_entry: uuid::new(false),
+            last_top_visible_entry: Uuid::new(false),
             custom_data: StringDictionary::new(),
 
             // Methods implemented in fields
-            uuid: uuid::new(false),
+            uuid: Uuid::new(false),
         }
     }
 }

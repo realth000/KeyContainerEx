@@ -1,17 +1,17 @@
 pub use guid_create::GUID;
 
 #[derive(Debug)]
-pub struct uuid {
+pub struct Uuid {
     pub uuid_size: i8,
     pb_uuid: GUID,
 }
 
-impl uuid {
+impl Uuid {
     pub fn new(create: bool) -> Self {
         if create {
-            uuid::create_new()
+            Uuid::create_new()
         } else {
-            uuid::zero()
+            Uuid::zero()
         }
     }
 
@@ -23,8 +23,12 @@ impl uuid {
         self.pb_uuid = guid;
     }
 
+    pub fn to_string(&self) -> String {
+        self.pb_uuid.to_string()
+    }
+
     fn create_new() -> Self {
-        uuid {
+        Uuid {
             uuid_size: 0,
             pb_uuid: GUID::rand(),
         }
@@ -32,6 +36,6 @@ impl uuid {
 
     // TODO: Only init pb_uuid, do NOT set value?
     fn zero() -> Self {
-        uuid::create_new()
+        Uuid::create_new()
     }
 }

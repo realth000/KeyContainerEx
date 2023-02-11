@@ -12,3 +12,9 @@ See also code of [KeePassXC](https://github.com/keepassxreboot/keepassxc/)
 => ``m_listGroups`` (**PwObjectList.cs** -> **object_list.rs**)
 
 **kdbx4** => ``m_dCustomData`` (**StringDictionaryEx** -> **string_dictionary.rs**)
+
+**kdbx4** => ``m_vDeletedObjects`` (**PwDeletedObjects** -> **deleted_object.rs**)
+
+**kdbx4** => ``m_caCompression`` (**PwEnums.cs** -> **define.rs**)
+
+**kdbx4** => ``m_kdfParams`` (**KdfParameters.cs** -> **kdf_param.rs**)
