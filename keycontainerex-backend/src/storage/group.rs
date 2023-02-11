@@ -1,65 +1,70 @@
-use crate::storage::{
-    collections::string_dictionary::StringDictionary, serialization::object_list::ObjectList,
-    uuid::uuid,
-};
+use crate::storage::{collections::string_dictionary::StringDictionary, uuid::uuid};
+use chrono::{DateTime, Utc};
+use std::os::unix::raw::mode_t;
 use std::rc::Rc;
-use std::time::SystemTime;
 
 fn test() {
-    let o: ObjectList<i32> = ObjectList::new();
+    let o: Vec<i32> = Vec::new();
 }
 
 #[derive(Debug)]
 pub struct Group {
     default_auto_type_enabled: bool,
     default_search_enabled: bool,
-    list_groups: ObjectList<Group>,
-    list_entries: ObjectList<Group>,
-    parent_group: Option<Rc<Group>>,
-    parent_group_last_modified: SystemTime,
+    list_groups: Vec<Group>,
+    list_entries: Vec<Group>,
+    pub parent_group: Option<Rc<Group>>,
+    pub parent_group_last_modified: DateTime<Utc>,
 
-    name: String,
-    notes: String,
+    pub name: String,
+    pub notes: String,
 
     // icon;
-    // icon id;
-    creation: SystemTime,
-    last_modified: SystemTime,
-    last_access: SystemTime,
-    expire: SystemTime,
-    is_expired: bool,
-    usage_count: u64,
+    // pub icon id;
+    pub creation_time: DateTime<Utc>,
+    pub last_modified_time: DateTime<Utc>,
+    pub last_access_time: DateTime<Utc>,
+    pub expire_time: DateTime<Utc>,
+    pub is_expired: bool,
+    pub usage_count: u64,
 
-    is_expanded: bool,
-    is_virtual: bool,
+    pub is_expanded: bool,
+    pub is_virtual: bool,
 
-    default_auto_type_sequence: String,
+    pub default_auto_type_sequence: String,
 
-    enable_auto_type: Option<bool>,
-    enable_search: Option<bool>,
+    pub enable_auto_type: Option<bool>,
+    pub enable_searching: Option<bool>,
 
-    last_top_visible_entry: uuid,
+    pub last_top_visible_entry: uuid,
 
     custom_data: StringDictionary,
+
+    // TODO: Implement GroupTouched here.
+    // TODO: Implement Touched here.
+
+    // Methods implemented in fields
+    pub uuid: uuid,
 }
 
 impl Default for Group {
     fn default() -> Self {
+        let time = Utc::now();
         Group {
             default_auto_type_enabled: true,
             default_search_enabled: true,
-            list_groups: ObjectList::new(),
-            list_entries: ObjectList::new(),
+            list_groups: Vec::new(),
+            list_entries: Vec::new(),
             parent_group: None,
-            parent_group_last_modified: SystemTime::now(),
+            parent_group_last_modified: time.clone(),
 
             name: String::new(),
             notes: String::new(),
 
-            creation: SystemTime::now(),
-            last_modified: SystemTime::now(),
-            last_access: SystemTime::now(),
-            expire: SystemTime::now(),
+            creation_time: time.clone(),
+            last_modified_time: time.clone(),
+            last_access_time: time.clone(),
+            expire_time: time.clone(),
             is_expired: false,
             usage_count: 0,
 
@@ -69,10 +74,80 @@ impl Default for Group {
             default_auto_type_sequence: String::new(),
 
             enable_auto_type: None,
-            enable_search: None,
+            enable_searching: None,
 
             last_top_visible_entry: uuid::new(false),
             custom_data: StringDictionary::new(),
+
+            // Methods implemented in fields
+            uuid: uuid::new(false),
         }
+    }
+}
+
+impl Group {
+    // FIXME: Enable create_uuid and set_times
+    pub fn new(create_uuid: bool, set_times: bool, name: Option<&str>) -> Self {
+        let mut g = Group::default();
+        match name {
+            Some(s) => {
+                g.name.clone_from(&String::from(s));
+                g
+            }
+            None => g,
+        }
+    }
+
+    pub fn groups(&self) -> &Vec<Group> {
+        &self.list_groups
+    }
+
+    pub fn entries(&self) -> &Vec<Group> {
+        &self.list_entries
+    }
+
+    pub fn custom_data(&self) -> &StringDictionary {
+        &self.custom_data
+    }
+
+    pub fn touch(self, modified: bool) {
+        self.touch_also_parent(modified, true);
+    }
+
+    pub fn touch_also_parent(mut self, modified: bool, touch_parent: bool) {
+        self.last_access_time = Utc::now();
+        self.usage_count += 1;
+        if modified {
+            self.last_modified_time = self.last_access_time;
+        }
+        // TODO: Implement this.Touched() here.
+        // TODO: Use implemented PwGroup.GroupTouched here.
+        if touch_parent {
+            match self.parent_group {
+                Some(p) => p.touch_also_parent(modified, true),
+                None => {}
+            }
+        }
+    }
+
+    pub fn count(&self, recursive: bool) -> (usize, usize) {
+        if recursive {
+            let mut total_groups: usize = self.list_groups.len();
+            let mut total_entries: usize = self.list_entries.len();
+            let iter = self.list_groups.iter();
+            for lg in iter {
+                let (c1, c2) = lg.count(recursive);
+                total_groups += c1;
+                total_entries += c2;
+            }
+            (total_groups, total_entries)
+        } else {
+            (self.list_groups.len(), self.list_entries.len())
+        }
+    }
+
+    pub fn count_entries(&self, recursive: bool) -> usize {
+        let (_, total_entries) = self.count(recursive);
+        total_entries
     }
 }
