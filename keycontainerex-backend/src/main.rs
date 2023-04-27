@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
     name: Option<String>,
@@ -19,9 +19,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    Init {
+    },
 
     Add {
-
+        user: String,
+        password: String,
     },
 
     Remove {
