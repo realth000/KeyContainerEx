@@ -1,87 +1,62 @@
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::{Arg, arg, ArgAction, ArgMatches, Command};
 
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Cli {
-    name: Option<String>,
-
-    #[arg(short, long, value_name = "FILE")]
-    config: Option<PathBuf>,
-
-    #[arg(short, long, action = clap::ArgAction::Count)]
-    debug: u8,
-
-    #[command(subcommand)]
-    command: Option<Commands>,
-}
-
-#[derive(Subcommand)]
-enum Commands {
-    Init {
-    },
-
-    Add {
-        user: String,
-        password: String,
-    },
-
-    Remove {
-
-    },
-
-    Show {
-
-    },
-
-    Config {
-
-    },
-
-    Test {
-        #[arg(short, long)]
-        list: bool,
-    },
-}
+use keycontainerex_backend::storage;
 
 fn main() {
-    let cli = Cli::parse();
-    if let Some(name) = cli.name.as_deref() {
-        println!("name's value = {name}");
-    }
+    let user_arg = Arg::new("user")
+        .short('u')
+        .long("user")
+        .help("User name or account name")
+        .action(ArgAction::Set)
+        .required(true);
 
-    if let Some(config_path) = cli.config.as_deref() {
-        println!("config's value = {}", config_path.display())
-    }
+    let password_arg = Arg::new("password")
+        .short('p')
+        .long("password")
+        .help("Password value")
+        .action(ArgAction::Set)
+        .required(true);
 
-    match cli.debug {
-        0 => println!("debug level = 0"),
-        1 => println!("debug level = 1"),
-        _ => println!("too many debugs"),
-    }
+    let matches = Command::new("keyContainer")
+        .about("Password manage tool")
+        .version("0.1.0")
+        .subcommand_required(true)
+        .arg_required_else_help(true)
+        .subcommand(
+            Command::new("add")
+                .arg(user_arg.clone())
+                .arg(password_arg.clone())
+        )
+        .subcommand(
+            Command::new("remove")
+                .arg(user_arg.clone())
+                .arg(password_arg.clone())
+        )
+        .subcommand(
+            Command::new("show")
+                .arg(
+                    Arg::new("all")
+                        .short('a')
+                        .long("all")
+                        .help("Show all users and password")
+                        .action(ArgAction::SetTrue)
+                )
+        )
+        .subcommand(
+            Command::new("config")
+        ).get_matches();
 
-    match &cli.command {
-        Some(Commands::Add {  }) => {
-
+    match matches.subcommand() {
+        Some(("add", add_matches)) => {
+            let username = add_matches.get_one::<String>("user").unwrap();
+            let password = add_matches.get_one::<String>("password").unwrap();
+            println!("[debug] add: username={:?}, password={:?}", username, password)
         }
-
-        Some(Commands::Remove {  }) => {
-
-        }
-        Some(Commands::Show {  }) => {
-
-        }
-        Some(Commands::Config {  }) => {
-
-        }
-        Some(Commands::Test { list }) => {
-            if *list {
-                println!("printing test lists...")
-            } else {
-                println!("Not printing test lists...")
-            }
-        }
-        None => {}
+        Some(("remove", remove_matches)) => {}
+        Some(("show", show_matches)) => {}
+        Some(("config", config_matches)) => {}
+        _ => {}
     }
 }
