@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Arg, arg, ArgAction, ArgMatches, Command};
+use clap::{Arg, ArgAction, ArgMatches, Command};
 
 use keycontainerex_backend::storage;
 
@@ -24,6 +24,14 @@ fn main() {
         .version("0.1.0")
         .subcommand_required(true)
         .arg_required_else_help(true)
+        .subcommand(
+            Command::new("init")
+                .arg(
+                    Arg::new("path")
+                        .index(1)
+                        .action(ArgAction::Set)
+                )
+        )
         .subcommand(
             Command::new("add")
                 .arg(user_arg.clone())
@@ -49,14 +57,31 @@ fn main() {
         ).get_matches();
 
     match matches.subcommand() {
+        Some(("init", init_matches)) => {
+            let path = init_matches.get_one::<String>("path");
+            let result = storage::init(path);
+            if result.is_err() {
+                println!("failed to init: {:?}", result);
+                return;
+            }
+            println!("[debug] init: path={:?}", path);
+        }
         Some(("add", add_matches)) => {
             let username = add_matches.get_one::<String>("user").unwrap();
             let password = add_matches.get_one::<String>("password").unwrap();
             println!("[debug] add: username={:?}, password={:?}", username, password)
         }
-        Some(("remove", remove_matches)) => {}
-        Some(("show", show_matches)) => {}
+        Some(("remove", remove_matches)) => {
+            let username = remove_matches.get_one::<String>("user").unwrap();
+            let password = remove_matches.get_one::<String>("password").unwrap();
+            println!("[debug] remove: username={:?}, password={:?}", username, password)
+        }
+        Some(("show", show_matches)) => {
+            let show_all = show_matches.get_flag("all");
+            println!("[debug] show: show_all={:?}", show_all);
+        }
         Some(("config", config_matches)) => {}
         _ => {}
+
     }
 }
