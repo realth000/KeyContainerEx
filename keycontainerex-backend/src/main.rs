@@ -1,6 +1,4 @@
-use std::path::PathBuf;
-
-use clap::{Arg, ArgAction, ArgMatches, Command};
+use clap::{Arg, ArgAction, Command};
 
 use keycontainerex_backend::storage;
 
@@ -27,61 +25,67 @@ fn main() {
         .subcommand(
             Command::new("init")
                 .arg(
-                    Arg::new("path")
-                        .index(1)
-                        .action(ArgAction::Set)
+                    Arg::new("force")
+                        .short('f')
+                        .long("force")
+                        .help("Force create, will remove the old file if already exists.")
+                        .action(ArgAction::SetTrue),
                 )
+                .arg(Arg::new("path").index(1).action(ArgAction::Set)),
         )
         .subcommand(
             Command::new("add")
                 .arg(user_arg.clone())
-                .arg(password_arg.clone())
+                .arg(password_arg.clone()),
         )
         .subcommand(
             Command::new("remove")
                 .arg(user_arg.clone())
-                .arg(password_arg.clone())
+                .arg(password_arg.clone()),
         )
         .subcommand(
-            Command::new("show")
-                .arg(
-                    Arg::new("all")
-                        .short('a')
-                        .long("all")
-                        .help("Show all users and password")
-                        .action(ArgAction::SetTrue)
-                )
+            Command::new("show").arg(
+                Arg::new("all")
+                    .short('a')
+                    .long("all")
+                    .help("Show all users and password")
+                    .action(ArgAction::SetTrue),
+            ),
         )
-        .subcommand(
-            Command::new("config")
-        ).get_matches();
+        .subcommand(Command::new("config"))
+        .get_matches();
 
     match matches.subcommand() {
         Some(("init", init_matches)) => {
             let path = init_matches.get_one::<String>("path");
-            let result = storage::init(path);
+            let force = init_matches.get_flag("force");
+            let result = storage::init(path, force);
             if result.is_err() {
-                println!("failed to init: {:?}", result);
+                println!("failed to init: {}", result.err().unwrap());
                 return;
             }
-            println!("[debug] init: path={:?}", path);
+            if path.is_some() {
+                println!("[debug] init: path={}", path.unwrap());
+            }
         }
         Some(("add", add_matches)) => {
             let username = add_matches.get_one::<String>("user").unwrap();
             let password = add_matches.get_one::<String>("password").unwrap();
-            println!("[debug] add: username={:?}, password={:?}", username, password)
+            println!("[debug] add: username={}, password={}", username, password)
         }
         Some(("remove", remove_matches)) => {
             let username = remove_matches.get_one::<String>("user").unwrap();
             let password = remove_matches.get_one::<String>("password").unwrap();
-            println!("[debug] remove: username={:?}, password={:?}", username, password)
+            println!(
+                "[debug] remove: username={}, password={}",
+                username, password
+            )
         }
         Some(("show", show_matches)) => {
             let show_all = show_matches.get_flag("all");
-            println!("[debug] show: show_all={:?}", show_all);
+            println!("[debug] show: show_all={}", show_all);
         }
         Some(("config", config_matches)) => {}
         _ => {}
-
     }
 }
