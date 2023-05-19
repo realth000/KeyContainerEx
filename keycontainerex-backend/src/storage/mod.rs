@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use dirs;
 use rpassword::read_password;
 
-use crate::storage::kdbx::init_storage;
+use crate::storage::kdbx::init_kdbx;
 
 mod kdbx;
 
@@ -53,6 +53,6 @@ pub fn init(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error>> {
         return Err("password confirm not pass".into());
     }
 
-    init_storage(storage_path, password.as_str())?;
+    init_kdbx(storage_path, password.as_str())?;
     Ok(())
 }
