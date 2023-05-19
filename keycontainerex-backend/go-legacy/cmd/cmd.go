@@ -249,7 +249,7 @@ func Run() {
 		} else {
 			log.Fatalln("failed to check config dir:", err)
 		}
-		defaultStoragePath = fmt.Sprintf("%s/KeyContainerEx/storage/default.kcex", userConfDir)
+		defaultStoragePath = fmt.Sprintf("%s/KeyContainerEx/storage/default.kdbx", userConfDir)
 	}
 
 	if err := rootCmd.Execute(); err != nil {

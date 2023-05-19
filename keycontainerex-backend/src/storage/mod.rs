@@ -5,7 +5,6 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use dirs;
-
 use rpassword::read_password;
 
 use crate::storage::kdbx::init_storage;
@@ -16,7 +15,7 @@ fn get_config_file() -> Result<PathBuf, Box<dyn Error>> {
     match dirs::config_dir() {
         Some(mut path) => {
             path.push("KeyContainerEx");
-            path.push("default.kbdx");
+            path.push("default.kdbx");
             Ok(path)
         }
         _ => Err("failed to get config directory".into()),
@@ -38,15 +37,16 @@ pub fn init(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error>> {
             fs::remove_file(&storage_path)?;
         }
     }
+    fs::File::create(&storage_path)?;
 
     // TODO: Init kdbx here.
-    println!("Password: ");
+    print!("Password: ");
     io::stdout().flush().unwrap();
     let password = read_password().unwrap();
     if password.is_empty() {
         return Err("empty password".into());
     }
-    println!("Confirm: ");
+    print!("Confirm: ");
     io::stdout().flush().unwrap();
     let password_confirm = read_password().unwrap();
     if password != password_confirm {
