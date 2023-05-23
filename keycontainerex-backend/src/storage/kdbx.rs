@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::fs::OpenOptions;
+use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
 use std::{fs, io};
@@ -63,6 +63,9 @@ pub fn init_kdbx(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error
     Ok(())
 }
 
-pub fn open_kdbx(path: PathBuf, password: &str) -> Result<(), Box<dyn Error>> {
-    Ok(())
+pub fn open_kdbx(path: PathBuf, password: &str) -> Result<Database, Box<dyn Error>> {
+    Ok(Database::open(
+        &mut File::open(path)?,
+        DatabaseKey::with_password(password),
+    )?)
 }

@@ -1,2 +1,2 @@
 pub mod storage;
-mod util;
+pub mod util;

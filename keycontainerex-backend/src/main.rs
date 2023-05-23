@@ -1,8 +1,11 @@
+use std::error::Error;
+
 use clap::{Arg, ArgAction, Command};
 
 use keycontainerex_backend::storage;
+use keycontainerex_backend::util::{read_password, unwrap_or_return};
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let user_arg = Arg::new("user")
         .short('u')
         .long("user")
@@ -16,6 +19,11 @@ fn main() {
         .help("Password value")
         .action(ArgAction::Set)
         .required(true);
+
+    let key_arg = Arg::new("key")
+        .short('k')
+        .long("key")
+        .action(ArgAction::Set);
 
     let matches = Command::new("keyContainer")
         .about("Password manage tool")
@@ -44,7 +52,7 @@ fn main() {
                 .arg(password_arg.clone()),
         )
         .subcommand(
-            Command::new("show").arg(
+            Command::new("show").arg(key_arg.clone()).arg(
                 Arg::new("all")
                     .short('a')
                     .long("all")
@@ -61,8 +69,10 @@ fn main() {
             let force = init_matches.get_flag("force");
             let result = storage::init(path, force);
             if result.is_err() {
-                println!("failed to init: {}", result.err().unwrap());
-                return;
+                println!(
+                    "failed to init: {}",
+                    unwrap_or_return!(result.err(), "failed to init with unknown error")
+                );
             }
             if path.is_some() {
                 println!("[debug] init: path={}", path.unwrap());
@@ -82,10 +92,18 @@ fn main() {
             )
         }
         Some(("show", show_matches)) => {
+            let default_key = String::from("");
+            let key = show_matches
+                .get_one::<String>("key")
+                .unwrap_or(&default_key);
+            if key.is_empty() {
+                let k = unwrap_or_return!(read_password("password"), "failed to read password");
+            }
             let show_all = show_matches.get_flag("all");
             println!("[debug] show: show_all={}", show_all);
         }
         Some(("config", config_matches)) => {}
         _ => {}
     }
+    Ok(())
 }
