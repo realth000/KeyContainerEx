@@ -18,8 +18,6 @@ macro_rules! unwrap_or_return {
     };
 }
 
-pub use unwrap_or_return;
-
 pub fn read_password(hint: &str) -> io::Result<String> {
     print!("{}", hint);
     io::stdout().flush().unwrap();

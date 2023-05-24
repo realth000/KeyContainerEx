@@ -3,7 +3,8 @@ use std::error::Error;
 use clap::{Arg, ArgAction, Command};
 
 use keycontainerex_backend::storage;
-use keycontainerex_backend::util::{read_password, unwrap_or_return};
+use keycontainerex_backend::util::read_password;
+use keycontainerex_backend::{box_error, unwrap_or_return};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let user_arg = Arg::new("user")
@@ -69,10 +70,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let force = init_matches.get_flag("force");
             let result = storage::init(path, force);
             if result.is_err() {
-                println!(
-                    "failed to init: {}",
-                    unwrap_or_return!(result.err(), "failed to init with unknown error")
-                );
+                println!("failed to init: {}", result.err().unwrap());
             }
             if path.is_some() {
                 println!("[debug] init: path={}", path.unwrap());

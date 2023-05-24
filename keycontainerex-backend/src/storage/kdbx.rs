@@ -1,14 +1,13 @@
 use std::error::Error;
+use std::fs;
 use std::fs::{File, OpenOptions};
-use std::io::Write;
 use std::path::PathBuf;
-use std::{fs, io};
 
 use dirs;
 use keepass::{Database, DatabaseKey};
-use rpassword::read_password;
 
-use crate::util::box_error;
+use crate::box_error;
+use crate::util::read_password;
 
 fn get_kdbx_file() -> Result<PathBuf, Box<dyn Error>> {
     match dirs::config_dir() {
@@ -37,15 +36,11 @@ pub fn init_kdbx(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error
         }
     }
 
-    print!("Password: ");
-    io::stdout().flush().unwrap();
-    let password = read_password().unwrap();
+    let password = read_password("Password: ").unwrap();
     if password.is_empty() {
         return box_error!("empty password");
     }
-    print!("Confirm password: ");
-    io::stdout().flush().unwrap();
-    let password_confirm = read_password().unwrap();
+    let password_confirm = read_password("Confirm password: ").unwrap();
     if password != password_confirm {
         return box_error!("password confirm not pass");
     }

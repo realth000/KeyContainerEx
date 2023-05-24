@@ -6,7 +6,7 @@ use std::string::ToString;
 use dirs;
 use serde::{Deserialize, Serialize};
 
-use crate::util::box_error;
+use crate::box_error;
 
 #[derive(Deserialize, Serialize)]
 struct Config {
