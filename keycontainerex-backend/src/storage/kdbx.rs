@@ -34,6 +34,11 @@ pub fn init_kdbx(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error
         } else {
             fs::remove_file(&kdbx_path)?;
         }
+    } else if kdbx_path.parent().is_some() {
+        let folder = kdbx_path.parent().unwrap();
+        if !folder.exists() {
+            fs::create_dir_all(folder)?;
+        }
     }
 
     let password = read_password("Password: ").unwrap();
