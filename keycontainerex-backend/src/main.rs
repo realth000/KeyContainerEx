@@ -26,6 +26,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         .long("key")
         .action(ArgAction::Set);
 
+    let path_arg = Arg::new("path")
+        .short('p')
+        .long("path")
+        .action(ArgAction::Set);
+
     let matches = Command::new("keyContainer")
         .about("Password manage tool")
         .version("0.1.0")
@@ -40,7 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .help("Force create, will remove the old file if already exists.")
                         .action(ArgAction::SetTrue),
                 )
-                .arg(Arg::new("path").index(1).action(ArgAction::Set)),
+                .arg(path_arg.clone()),
         )
         .subcommand(
             Command::new("add")
@@ -95,7 +100,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .get_one::<String>("key")
                 .unwrap_or(&default_key);
             if key.is_empty() {
-                let k = unwrap_or_return!(read_password("password"), "failed to read password");
+                let password =
+                    unwrap_or_return!(read_password("password"), "failed to read password");
+                let path = show_matches.get_one::<String>("path");
+                if path.is_some() {
+                    println!("[debug] show: path={}", path.unwrap());
+                }
+                let database = unwrap_or_return!(storage::open_kdbx(path, &password)?);
             }
             let show_all = show_matches.get_flag("all");
             println!("[debug] show: show_all={}", show_all);

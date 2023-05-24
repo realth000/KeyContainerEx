@@ -1,7 +1,9 @@
 use std::error::Error;
 
-use crate::storage::config::init_config;
-use crate::storage::kdbx::init_kdbx;
+pub use kdbx::open_kdbx;
+
+use config::init_config;
+use kdbx::init_kdbx;
 
 mod config;
 mod kdbx;
