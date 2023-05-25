@@ -63,7 +63,7 @@ pub fn init_kdbx(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error
     Ok(())
 }
 
-pub fn open_kdbx(path: Option<&String>, password: &String) -> Result<Database, Box<dyn Error>> {
+pub fn open_kdbx(path: Option<&String>, password: &str) -> Result<Database, Box<dyn Error>> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(path),
         None => get_kdbx_file()?,

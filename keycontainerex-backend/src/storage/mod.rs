@@ -1,9 +1,8 @@
 use std::error::Error;
 
-pub use kdbx::open_kdbx;
-
 use config::init_config;
 use kdbx::init_kdbx;
+pub use kdbx::open_kdbx;
 
 mod config;
 mod kdbx;
