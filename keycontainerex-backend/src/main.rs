@@ -2,6 +2,7 @@ use std::error::Error;
 
 use clap::{Arg, ArgAction, Command};
 
+use keepass::db::NodeRef;
 use keycontainerex_backend::storage;
 use keycontainerex_backend::util::read_password;
 use keycontainerex_backend::{box_error, unwrap_or_return};
@@ -58,13 +59,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .arg(password_arg.clone()),
         )
         .subcommand(
-            Command::new("show").arg(key_arg.clone()).arg(
-                Arg::new("all")
-                    .short('a')
-                    .long("all")
-                    .help("Show all users and password")
-                    .action(ArgAction::SetTrue),
-            ),
+            Command::new("show")
+                .arg(key_arg.clone())
+                .arg(
+                    Arg::new("all")
+                        .short('a')
+                        .long("all")
+                        .help("Show all users and password")
+                        .action(ArgAction::SetTrue),
+                )
+                .arg(path_arg.clone()),
         )
         .subcommand(Command::new("config"))
         .get_matches();
@@ -95,21 +99,32 @@ fn main() -> Result<(), Box<dyn Error>> {
             )
         }
         Some(("show", show_matches)) => {
-            let default_key = String::from("");
-            let key = show_matches
-                .get_one::<String>("key")
-                .unwrap_or(&default_key);
-            if key.is_empty() {
-                let password =
-                    unwrap_or_return!(read_password("password"), "failed to read password");
-                let path = show_matches.get_one::<String>("path");
-                if path.is_some() {
-                    println!("[debug] show: path={}", path.unwrap());
-                }
-                let database = unwrap_or_return!(storage::open_kdbx(path, &password)?);
-            }
             let show_all = show_matches.get_flag("all");
             println!("[debug] show: show_all={}", show_all);
+            let default_key = String::from("");
+            let mut readed_key = String::from("");
+            let key = show_matches.get_one::<String>("key").unwrap_or_else(|| {
+                readed_key = read_password("password").unwrap_or(default_key);
+                &readed_key
+            });
+            let path = show_matches.get_one::<String>("path");
+            if path.is_some() {
+                println!("[debug] show: path={}", path.unwrap());
+            }
+            let database = unwrap_or_return!(storage::open_kdbx(path, &key));
+            for node in &database.root {
+                match node {
+                    NodeRef::Group(g) => {
+                        println!("Saw group {}", g.name);
+                    }
+                    NodeRef::Entry(e) => {
+                        let title = e.get_title().unwrap_or("(no title)");
+                        let username = e.get_username().unwrap_or("(no username)");
+                        let password = e.get_password().unwrap_or("(no password)");
+                        println!("Entry '{}': '{}' '{}'", title, username, password);
+                    }
+                }
+            }
         }
         Some(("config", config_matches)) => {}
         _ => {}
