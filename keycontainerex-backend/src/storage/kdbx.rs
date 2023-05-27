@@ -73,3 +73,7 @@ pub fn open_kdbx(path: Option<&String>, password: &str) -> Result<Database, Box<
         DatabaseKey::with_password(password),
     )?)
 }
+
+pub fn add_kdbx_group(path: Option<&String>, password: &str) -> Result<(), Box<dyn Error>> {
+    Ok(())
+}

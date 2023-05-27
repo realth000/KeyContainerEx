@@ -28,6 +28,17 @@ macro_rules! unwrap_or_return {
     };
 }
 
+pub fn read_line(hint: &str) -> io::Result<String> {
+    print!("{}", hint);
+    io::stdout().flush().unwrap();
+    let mut result = String::new();
+    io::stdin().read_line(&mut result)?;
+    if result.ends_with("\n") {
+        result.pop();
+    }
+    Ok(result)
+}
+
 pub fn read_password(hint: &str) -> io::Result<String> {
     print!("{}", hint);
     io::stdout().flush().unwrap();
