@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let key_arg = Arg::new("key").short('k').long("key");
 
-    let path_arg = Arg::new("path").short('p').long("path");
+    let database_arg = Arg::new("database").short('d').long("database");
 
     let matches = Command::new("keyContainer")
         .about("Password manage tool")
@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .help("Force create, will remove the old file if already exists.")
                         .action(ArgAction::SetTrue),
                 )
-                .arg(path_arg.clone()),
+                .arg(database_arg.clone()),
         )
         .subcommand(
             Command::new("add")
@@ -60,7 +60,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .arg(user_arg.clone())
                         .arg(password_arg.clone()),
                 )
-                .arg(path_arg.clone().global(true)),
+                .arg(key_arg.clone())
+                .arg(database_arg.clone().global(true)),
         )
         .subcommand(
             Command::new("remove")
@@ -77,27 +78,27 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .help("Show all users and password")
                         .action(ArgAction::SetTrue),
                 )
-                .arg(path_arg.clone()),
+                .arg(database_arg.clone()),
         )
         .subcommand(Command::new("config"))
         .get_matches();
 
     match matches.subcommand() {
         Some(("init", init_matches)) => {
-            let path = init_matches.get_one::<String>("path");
+            let database = init_matches.get_one::<String>("database");
             let force = init_matches.get_flag("force");
-            let result = storage::init(path, force);
+            let result = storage::init(database, force);
             if result.is_err() {
                 println!("failed to init: {}", result.err().unwrap());
             }
-            if path.is_some() {
-                println!("[debug] init: path={}", path.unwrap());
+            if database.is_some() {
+                println!("[debug] init: database={}", database.unwrap());
             }
         }
         Some(("add", add_matches)) => {
-            let path = add_matches.get_one::<String>("path");
-            if path.is_some() {
-                println!("[debug] add: path={}", path.unwrap());
+            let database = add_matches.get_one::<String>("database");
+            if database.is_some() {
+                println!("[debug] add: database={}", database.unwrap());
             }
             let default_key = String::from("");
             let mut readed_key = String::from("");
@@ -109,7 +110,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Some(("group", group_matches)) => {
                     let group_name = group_matches.get_one::<String>("groupname").unwrap();
                     println!("[debug] add group {}", group_name);
-                    let database = unwrap_or_return!(storage::add_kdbx_group(path, key));
+                    let ret = storage::add_kdbx_group(database, key, &group_name);
+                    if ret.is_err() {
+                        return box_error!("failed to add group: {}", ret.unwrap_err().to_string());
+                    }
+                    return Ok(());
                 }
                 Some(("entry", entry_matches)) => {
                     let entry_name = entry_matches.get_one::<String>("entryname").unwrap();
@@ -155,11 +160,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 readed_key = read_password("password: ").unwrap_or(default_key);
                 &readed_key
             });
-            let path = show_matches.get_one::<String>("path");
-            if path.is_some() {
-                println!("[debug] show: path={}", path.unwrap());
+            let database = show_matches.get_one::<String>("database");
+            if database.is_some() {
+                println!("[debug] show: database={}", database.unwrap());
             }
-            let database = unwrap_or_return!(storage::open_kdbx(path, &key));
+            let database = unwrap_or_return!(storage::open_kdbx(database, &key));
             for node in &database.root {
                 match node {
                     NodeRef::Group(g) => {

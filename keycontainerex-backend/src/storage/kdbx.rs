@@ -4,6 +4,7 @@ use std::fs::{File, OpenOptions};
 use std::path::PathBuf;
 
 use dirs;
+use keepass::db::{Group, Node};
 use keepass::{Database, DatabaseKey};
 
 use crate::box_error;
@@ -55,8 +56,7 @@ pub fn init_kdbx(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error
             .create(true)
             .write(true)
             .truncate(true)
-            .open(&kdbx_path)
-            .unwrap(),
+            .open(&kdbx_path)?,
         DatabaseKey::with_password(&password),
     )?;
 
@@ -74,6 +74,24 @@ pub fn open_kdbx(path: Option<&String>, password: &str) -> Result<Database, Box<
     )?)
 }
 
-pub fn add_kdbx_group(path: Option<&String>, password: &str) -> Result<(), Box<dyn Error>> {
+pub fn add_kdbx_group(
+    path: Option<&String>,
+    password: &str,
+    group_name: &str,
+) -> Result<(), Box<dyn Error>> {
+    let kdbx_path = match path {
+        Some(path) => PathBuf::from(path),
+        None => get_kdbx_file()?,
+    };
+    let mut database = Database::open(
+        &mut File::open(&kdbx_path)?,
+        DatabaseKey::with_password(password),
+    )?;
+    let group = Group::new(&group_name);
+    database.root.children.push(Node::Group(group));
+    database.save(
+        &mut OpenOptions::new().write(true).open(&kdbx_path)?,
+        DatabaseKey::with_password(password),
+    )?;
     Ok(())
 }
