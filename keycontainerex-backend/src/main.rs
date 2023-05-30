@@ -26,15 +26,25 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
             if ret.is_err() {
                 return box_error!("failed to add group: {}", ret.unwrap_err().to_string());
             }
-            return Ok(());
-        }
-        Some(("entry", entry_matches)) => {
-            let entry_name = entry_matches.get_one::<String>("entryname").unwrap();
-            println!("[debug] add entry {}", entry_name);
+            Ok(())
         }
         Some(("password", password_matches)) => {
+            let mut group = String::new();
+            let mut title = String::new();
             let mut username = String::new();
             let mut password = String::new();
+            let group = password_matches
+                .get_one::<String>("group")
+                .unwrap_or_else(|| {
+                    group = read_line("group: ").unwrap();
+                    &group
+                });
+            let title = password_matches
+                .get_one::<String>("title")
+                .unwrap_or_else(|| {
+                    title = read_line("title: ").unwrap();
+                    &title
+                });
             let username = password_matches
                 .get_one::<String>("username")
                 .unwrap_or_else(|| {
@@ -48,16 +58,25 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
                     &password
                 });
             println!("[debug] add username={}, password={}", username, password);
+            let ret = storage::add_kdbx_entry(database, key, group, title, username, password);
+            if ret.is_err() {
+                return box_error!("failed to add password: {}", ret.unwrap_err().to_string());
+            }
+            Ok(())
         }
-        _ => {}
+        _ => Ok(()),
     }
-    Ok(())
     // let username = add_matches.get_one::<String>("username").unwrap();
     // let password = add_matches.get_one::<String>("password").unwrap();
     // println!("[debug] add: username={}, password={}", username, password)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let title_arg = Arg::new("title")
+        .short('t')
+        .long("title")
+        .help("Title for this pair of username and password");
+
     let user_arg = Arg::new("username")
         .short('u')
         .long("username")
@@ -90,7 +109,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .subcommand(
             Command::new("add")
-                .about("add [group | entry | password] to database")
+                .about("add [group | password] to database")
                 .subcommand_required(true)
                 .subcommand(
                     Command::new("group")
@@ -99,18 +118,19 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .arg(Arg::new("groupname").index(1).required(true)),
                 )
                 .subcommand(
-                    Command::new("entry")
-                        .alias("e")
-                        .about("add kdbx entry, contains passwords data")
-                        .arg(Arg::new("entryname").index(1).required(true)),
-                )
-                .subcommand(
                     Command::new("password")
                         .alias("p")
+                        .arg(
+                            Arg::new("group")
+                                .short('g')
+                                .long("group")
+                                .help("Specify a group to save password, by group name"),
+                        )
+                        .arg(title_arg.clone())
                         .arg(user_arg.clone())
                         .arg(password_arg.clone()),
                 )
-                .arg(key_arg.clone())
+                .arg(key_arg.clone().global(true))
                 .arg(database_arg.clone().global(true)),
         )
         .subcommand(

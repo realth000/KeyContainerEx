@@ -2,7 +2,7 @@ use std::error::Error;
 
 use config::init_config;
 use kdbx::init_kdbx;
-pub use kdbx::{add_kdbx_group, open_kdbx};
+pub use kdbx::{add_kdbx_entry, add_kdbx_group, open_kdbx};
 
 mod config;
 mod kdbx;
