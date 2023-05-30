@@ -13,10 +13,10 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
         println!("[debug] add: database={}", database.unwrap());
     }
     let default_key = String::from("");
-    let mut read_key = String::from("");
+    let mut key = String::from("");
     let key = add_matches.get_one::<String>("key").unwrap_or_else(|| {
-        read_key = read_password("password: ").unwrap_or(default_key);
-        &read_key
+        key = read_password("password: ").unwrap_or(default_key);
+        &key
     });
     match add_matches.subcommand() {
         Some(("group", group_matches)) => {
@@ -33,19 +33,19 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
             println!("[debug] add entry {}", entry_name);
         }
         Some(("password", password_matches)) => {
-            let mut read_username = String::new();
-            let mut read_password = String::new();
+            let mut username = String::new();
+            let mut password = String::new();
             let username = password_matches
                 .get_one::<String>("username")
                 .unwrap_or_else(|| {
-                    read_username = read_line("username: ").unwrap();
-                    &read_username
+                    username = read_line("username: ").unwrap();
+                    &username
                 });
             let password = password_matches
                 .get_one::<String>("password")
                 .unwrap_or_else(|| {
-                    read_password = read_password("password: ").unwrap();
-                    &read_password
+                    password = read_password("password: ").unwrap();
+                    &password
                 });
             println!("[debug] add username={}, password={}", username, password);
         }
@@ -160,10 +160,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             let show_all = show_matches.get_flag("all");
             println!("[debug] show: show_all={}", show_all);
             let default_key = String::from("");
-            let mut read_key = String::from("");
+            let mut key = String::from("");
             let key = show_matches.get_one::<String>("key").unwrap_or_else(|| {
-                read_key = read_password("password: ").unwrap_or(default_key);
-                &read_key
+                key = read_password("password: ").unwrap_or(default_key);
+                &key
             });
             let database = show_matches.get_one::<String>("database");
             if database.is_some() {
