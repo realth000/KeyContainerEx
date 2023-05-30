@@ -1,11 +1,61 @@
 use std::error::Error;
 
-use clap::{Arg, ArgAction, Command};
-
+use clap::{Arg, ArgAction, ArgMatches, Command};
 use keepass::db::NodeRef;
+
 use keycontainerex_backend::storage;
 use keycontainerex_backend::util::{read_line, read_password};
 use keycontainerex_backend::{box_error, unwrap_or_return};
+
+fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+    let database = add_matches.get_one::<String>("database");
+    if database.is_some() {
+        println!("[debug] add: database={}", database.unwrap());
+    }
+    let default_key = String::from("");
+    let mut read_key = String::from("");
+    let key = add_matches.get_one::<String>("key").unwrap_or_else(|| {
+        read_key = read_password("password: ").unwrap_or(default_key);
+        &read_key
+    });
+    match add_matches.subcommand() {
+        Some(("group", group_matches)) => {
+            let group_name = group_matches.get_one::<String>("groupname").unwrap();
+            println!("[debug] add group {}", group_name);
+            let ret = storage::add_kdbx_group(database, key, &group_name);
+            if ret.is_err() {
+                return box_error!("failed to add group: {}", ret.unwrap_err().to_string());
+            }
+            return Ok(());
+        }
+        Some(("entry", entry_matches)) => {
+            let entry_name = entry_matches.get_one::<String>("entryname").unwrap();
+            println!("[debug] add entry {}", entry_name);
+        }
+        Some(("password", password_matches)) => {
+            let mut read_username = String::new();
+            let mut read_password = String::new();
+            let username = password_matches
+                .get_one::<String>("username")
+                .unwrap_or_else(|| {
+                    read_username = read_line("username: ").unwrap();
+                    &read_username
+                });
+            let password = password_matches
+                .get_one::<String>("password")
+                .unwrap_or_else(|| {
+                    read_password = read_password("password: ").unwrap();
+                    &read_password
+                });
+            println!("[debug] add username={}, password={}", username, password);
+        }
+        _ => {}
+    }
+    Ok(())
+    // let username = add_matches.get_one::<String>("username").unwrap();
+    // let password = add_matches.get_one::<String>("password").unwrap();
+    // println!("[debug] add: username={}, password={}", username, password)
+}
 
 fn main() -> Result<(), Box<dyn Error>> {
     let user_arg = Arg::new("username")
@@ -96,52 +146,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
         Some(("add", add_matches)) => {
-            let database = add_matches.get_one::<String>("database");
-            if database.is_some() {
-                println!("[debug] add: database={}", database.unwrap());
-            }
-            let default_key = String::from("");
-            let mut readed_key = String::from("");
-            let key = add_matches.get_one::<String>("key").unwrap_or_else(|| {
-                readed_key = read_password("password: ").unwrap_or(default_key);
-                &readed_key
-            });
-            match add_matches.subcommand() {
-                Some(("group", group_matches)) => {
-                    let group_name = group_matches.get_one::<String>("groupname").unwrap();
-                    println!("[debug] add group {}", group_name);
-                    let ret = storage::add_kdbx_group(database, key, &group_name);
-                    if ret.is_err() {
-                        return box_error!("failed to add group: {}", ret.unwrap_err().to_string());
-                    }
-                    return Ok(());
-                }
-                Some(("entry", entry_matches)) => {
-                    let entry_name = entry_matches.get_one::<String>("entryname").unwrap();
-                    println!("[debug] add entry {}", entry_name);
-                }
-                Some(("password", password_matches)) => {
-                    let mut readed_username = String::new();
-                    let mut readed_password = String::new();
-                    let username = password_matches
-                        .get_one::<String>("username")
-                        .unwrap_or_else(|| {
-                            readed_username = read_line("username: ").unwrap();
-                            &readed_username
-                        });
-                    let password = password_matches
-                        .get_one::<String>("password")
-                        .unwrap_or_else(|| {
-                            readed_password = read_password("password: ").unwrap();
-                            &readed_password
-                        });
-                    println!("[debug] add username={}, password={}", username, password);
-                }
-                _ => {}
-            }
-            // let username = add_matches.get_one::<String>("username").unwrap();
-            // let password = add_matches.get_one::<String>("password").unwrap();
-            // println!("[debug] add: username={}, password={}", username, password)
+            return handle_add_command(add_matches);
         }
         Some(("remove", remove_matches)) => {
             let username = remove_matches.get_one::<String>("username").unwrap();
@@ -155,10 +160,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             let show_all = show_matches.get_flag("all");
             println!("[debug] show: show_all={}", show_all);
             let default_key = String::from("");
-            let mut readed_key = String::from("");
+            let mut read_key = String::from("");
             let key = show_matches.get_one::<String>("key").unwrap_or_else(|| {
-                readed_key = read_password("password: ").unwrap_or(default_key);
-                &readed_key
+                read_key = read_password("password: ").unwrap_or(default_key);
+                &read_key
             });
             let database = show_matches.get_one::<String>("database");
             if database.is_some() {
