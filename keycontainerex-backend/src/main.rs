@@ -4,8 +4,38 @@ use clap::{Arg, ArgAction, ArgMatches, Command};
 use keepass::db::NodeRef;
 
 use keycontainerex_backend::storage;
-use keycontainerex_backend::util::{read_line, read_password};
+use keycontainerex_backend::util;
 use keycontainerex_backend::{box_error, unwrap_or_return};
+
+fn handle_show_command(show_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+    let show_all = show_matches.get_flag("all");
+    println!("[debug] show: show_all={}", show_all);
+    let default_key = String::from("");
+    let mut key = String::from("");
+    let key = show_matches.get_one::<String>("key").unwrap_or_else(|| {
+        key = util::read_password("password: ").unwrap_or(default_key);
+        &key
+    });
+    let database = show_matches.get_one::<String>("database");
+    if database.is_some() {
+        println!("[debug] show: database={}", database.unwrap());
+    }
+    let database = unwrap_or_return!(storage::open_kdbx(database, key));
+    for node in &database.root {
+        match node {
+            NodeRef::Group(g) => {
+                println!("Saw group {}", g.name);
+            }
+            NodeRef::Entry(e) => {
+                let title = e.get_title().unwrap_or("(no title)");
+                let username = e.get_username().unwrap_or("(no username)");
+                let password = e.get_password().unwrap_or("(no password)");
+                println!("Entry '{}': '{}' '{}'", title, username, password);
+            }
+        }
+    }
+    Ok(())
+}
 
 fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     let database = add_matches.get_one::<String>("database");
@@ -15,14 +45,14 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     let default_key = String::from("");
     let mut key = String::from("");
     let key = add_matches.get_one::<String>("key").unwrap_or_else(|| {
-        key = read_password("password: ").unwrap_or(default_key);
+        key = util::read_password("password: ").unwrap_or(default_key);
         &key
     });
     match add_matches.subcommand() {
         Some(("group", group_matches)) => {
             let group_name = group_matches.get_one::<String>("groupname").unwrap();
             println!("[debug] add group {}", group_name);
-            let ret = storage::add_kdbx_group(database, key, &group_name);
+            let ret = storage::add_kdbx_group(database, key, group_name);
             if ret.is_err() {
                 return box_error!("failed to add group: {}", ret.unwrap_err().to_string());
             }
@@ -36,25 +66,25 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let group = password_matches
                 .get_one::<String>("group")
                 .unwrap_or_else(|| {
-                    group = read_line("group: ").unwrap();
+                    group = util::read_line("group: ").unwrap();
                     &group
                 });
             let title = password_matches
                 .get_one::<String>("title")
                 .unwrap_or_else(|| {
-                    title = read_line("title: ").unwrap();
+                    title = util::read_line("title: ").unwrap();
                     &title
                 });
             let username = password_matches
                 .get_one::<String>("username")
                 .unwrap_or_else(|| {
-                    username = read_line("username: ").unwrap();
+                    username = util::read_line("username: ").unwrap();
                     &username
                 });
             let password = password_matches
                 .get_one::<String>("password")
                 .unwrap_or_else(|| {
-                    password = read_password("password: ").unwrap();
+                    password = util::read_password("password: ").unwrap();
                     &password
                 });
             println!("[debug] add username={}, password={}", username, password);
@@ -126,7 +156,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                                 .long("group")
                                 .help("Specify a group to save password, by group name"),
                         )
-                        .arg(title_arg.clone())
+                        .arg(title_arg)
                         .arg(user_arg.clone())
                         .arg(password_arg.clone()),
                 )
@@ -135,12 +165,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .subcommand(
             Command::new("remove")
-                .arg(user_arg.clone().required(true))
-                .arg(password_arg.clone().required(true)),
+                .arg(user_arg.required(true))
+                .arg(password_arg.required(true)),
         )
         .subcommand(
             Command::new("show")
-                .arg(key_arg.clone())
+                .arg(key_arg)
                 .arg(
                     Arg::new("all")
                         .short('a')
@@ -148,7 +178,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .help("Show all users and password")
                         .action(ArgAction::SetTrue),
                 )
-                .arg(database_arg.clone()),
+                .arg(database_arg),
         )
         .subcommand(Command::new("config"))
         .get_matches();
@@ -177,32 +207,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             )
         }
         Some(("show", show_matches)) => {
-            let show_all = show_matches.get_flag("all");
-            println!("[debug] show: show_all={}", show_all);
-            let default_key = String::from("");
-            let mut key = String::from("");
-            let key = show_matches.get_one::<String>("key").unwrap_or_else(|| {
-                key = read_password("password: ").unwrap_or(default_key);
-                &key
-            });
-            let database = show_matches.get_one::<String>("database");
-            if database.is_some() {
-                println!("[debug] show: database={}", database.unwrap());
-            }
-            let database = unwrap_or_return!(storage::open_kdbx(database, &key));
-            for node in &database.root {
-                match node {
-                    NodeRef::Group(g) => {
-                        println!("Saw group {}", g.name);
-                    }
-                    NodeRef::Entry(e) => {
-                        let title = e.get_title().unwrap_or("(no title)");
-                        let username = e.get_username().unwrap_or("(no username)");
-                        let password = e.get_password().unwrap_or("(no password)");
-                        println!("Entry '{}': '{}' '{}'", title, username, password);
-                    }
-                }
-            }
+            return handle_show_command(show_matches);
         }
         Some(("config", config_matches)) => {}
         _ => {}

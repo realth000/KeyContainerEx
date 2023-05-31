@@ -1,14 +1,13 @@
 use std::error::Error;
-use std::fs;
-use std::fs::{File, OpenOptions};
+use std::fs::{self, File, OpenOptions};
 use std::path::PathBuf;
 
 use dirs;
-use keepass::db::{Entry, Group, Node, NodeRef, NodeRefMut, Value};
+use keepass::db::{Entry, Group, Node, NodeRefMut, Value};
 use keepass::{Database, DatabaseKey};
 
+use crate::box_error;
 use crate::util::read_password;
-use crate::{box_error, unwrap_or_return};
 
 fn get_kdbx_file() -> Result<PathBuf, Box<dyn Error>> {
     match dirs::config_dir() {
@@ -87,7 +86,7 @@ pub fn add_kdbx_group(
         &mut File::open(&kdbx_path)?,
         DatabaseKey::with_password(key),
     )?;
-    let group = Group::new(&group_name);
+    let group = Group::new(group_name);
     database.root.children.push(Node::Group(group));
     database.save(
         &mut OpenOptions::new().write(true).open(&kdbx_path)?,
