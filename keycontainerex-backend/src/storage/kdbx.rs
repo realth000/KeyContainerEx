@@ -117,7 +117,7 @@ pub fn add_kdbx_entry(
         .fields
         .insert("Title".to_string(), Value::Unprotected(title.to_string()));
     entry.fields.insert(
-        "Username".to_string(),
+        "UserName".to_string(),
         Value::Unprotected(username.to_string()),
     );
     entry.fields.insert(
