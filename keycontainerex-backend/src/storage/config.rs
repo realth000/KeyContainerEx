@@ -9,8 +9,22 @@ use serde::{Deserialize, Serialize};
 use crate::box_error;
 
 #[derive(Deserialize, Serialize)]
+struct Storage {
+    allow_duplicate_title: bool,
+}
+
+impl Default for Storage {
+    fn default() -> Self {
+        Storage {
+            allow_duplicate_title: false,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
 struct Config {
     kdbx_path: String,
+    storage: Storage,
 }
 
 fn get_config_file() -> Result<PathBuf, Box<dyn Error>> {
@@ -34,6 +48,7 @@ pub fn init_config(path: Option<&String>) -> Result<(), Box<dyn Error>> {
     }
     let config = Config {
         kdbx_path: config_path.to_str().unwrap().to_string(),
+        storage: Default::default(),
     };
     fs::write(config_path, toml::to_string(&config).unwrap())?;
     Ok(())

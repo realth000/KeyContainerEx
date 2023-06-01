@@ -3,6 +3,7 @@ use std::error::Error;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use keepass::db::NodeRef;
 
+use keycontainerex_backend::args::{apply_args, CONFIG_ARGS};
 use keycontainerex_backend::storage;
 use keycontainerex_backend::util;
 use keycontainerex_backend::{box_error, unwrap_or_return};
@@ -101,6 +102,16 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     // println!("[debug] add: username={}, password={}", username, password)
 }
 
+fn handle_config_command(config_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+    for arg in CONFIG_ARGS {
+        if !config_matches.contains_id(arg.name) {
+            continue;
+        }
+        let arg_value = config_matches.get_one::<arg.name>(arg.name);
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let title_arg = Arg::new("title")
         .short('t')
@@ -120,6 +131,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let key_arg = Arg::new("key").short('k').long("key");
 
     let database_arg = Arg::new("database").short('d').long("database");
+
+    let config_command = apply_args(Command::new("config").about("Setup configs"), CONFIG_ARGS);
 
     let matches = Command::new("keyContainer")
         .about("Password manage tool")
@@ -180,7 +193,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 )
                 .arg(database_arg),
         )
-        .subcommand(Command::new("config"))
+        .subcommand(config_command)
         .get_matches();
 
     match matches.subcommand() {
@@ -209,7 +222,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(("show", show_matches)) => {
             return handle_show_command(show_matches);
         }
-        Some(("config", config_matches)) => {}
+        Some(("config", config_matches)) => {
+            return handle_config_command(config_matches);
+        }
         _ => {}
     }
     Ok(())
