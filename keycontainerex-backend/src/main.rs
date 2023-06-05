@@ -3,10 +3,13 @@ use std::error::Error;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use keepass::db::NodeRef;
 
-use keycontainerex_backend::args::{apply_args, CONFIG_ARGS};
 use keycontainerex_backend::storage;
-use keycontainerex_backend::util;
+use keycontainerex_backend::util::{self, ArgEx, ArgExType};
 use keycontainerex_backend::{box_error, unwrap_or_return};
+
+fn get_config_command_args() -> &'static Vec<ArgEx> {
+    storage::get_config_vec()
+}
 
 fn handle_show_command(show_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     let show_all = show_matches.get_flag("all");
@@ -103,11 +106,31 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
 }
 
 fn handle_config_command(config_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
-    for arg in CONFIG_ARGS {
-        if !config_matches.contains_id(arg.name) {
+    for arg in get_config_command_args() {
+        if config_matches
+            .value_source(arg.arg_value.get_id().as_str())
+            .is_none()
+        {
             continue;
         }
-        let arg_value = config_matches.get_one::<arg.name>(arg.name);
+
+        match arg.arg_type {
+            ArgExType::Bool(_) => storage::update_config(
+                None,
+                arg.arg_name.as_str(),
+                ArgExType::Bool(config_matches.get_flag(arg.arg_name.as_str())),
+            ),
+            ArgExType::String(_) => storage::update_config(
+                None,
+                arg.arg_name.as_str(),
+                ArgExType::String(
+                    config_matches
+                        .get_one::<String>(arg.arg_name.as_str())
+                        .unwrap()
+                        .to_owned(),
+                ),
+            ),
+        }?
     }
     Ok(())
 }
@@ -131,8 +154,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let key_arg = Arg::new("key").short('k').long("key");
 
     let database_arg = Arg::new("database").short('d').long("database");
-
-    let config_command = apply_args(Command::new("config").about("Setup configs"), CONFIG_ARGS);
 
     let matches = Command::new("keyContainer")
         .about("Password manage tool")
@@ -193,7 +214,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                 )
                 .arg(database_arg),
         )
-        .subcommand(config_command)
+        .subcommand(
+            Command::new("config").about("Setup configs").args(
+                get_config_command_args()
+                    .iter()
+                    .map(|arg_ex| &arg_ex.arg_value)
+                    .collect::<Vec<&Arg>>(),
+            ),
+        )
         .get_matches();
 
     match matches.subcommand() {

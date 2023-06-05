@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use config::init_config;
+pub use config::{get_config_vec, update_config};
 use kdbx::init_kdbx;
 pub use kdbx::{add_kdbx_entry, add_kdbx_group, open_kdbx};
 
