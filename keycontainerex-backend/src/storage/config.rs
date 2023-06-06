@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use crate::util::type_of;
 use crate::{arg_ex, box_error};
 
+type ArgExSetFn = fn(&mut Config, &ArgExType) -> Result<(), Box<dyn Error>>;
+
 pub enum ArgExType {
     Bool(bool),
     String(String),
@@ -21,17 +23,29 @@ pub struct ArgEx {
     pub arg_name: String,
     pub arg_value: Arg,
     pub arg_type: ArgExType,
-    pub arg_set: fn(&mut Config, &ArgExType) -> Result<(), Box<dyn Error>>,
+    pub arg_set: ArgExSetFn,
 }
 
 #[macro_export]
 macro_rules! arg_ex {
     ($name: literal, $arg_type: expr, $help: expr, $action: expr, $set_func: expr) => {
-        ArgEx {
-            arg_name: String::from($name),
-            arg_value: Arg::new($name).long($name).help($help).action($action),
-            arg_type: $arg_type,
-            arg_set: $set_func,
+        match $arg_type {
+            ArgExType::Bool(_) => ArgEx {
+                arg_name: String::from($name),
+                arg_value: Arg::new($name)
+                    .long($name)
+                    .help($help)
+                    .action($action)
+                    .value_parser(clap::builder::BoolishValueParser::new()),
+                arg_type: $arg_type,
+                arg_set: $set_func,
+            },
+            _ => ArgEx {
+                arg_name: String::from($name),
+                arg_value: Arg::new($name).long($name).help($help).action($action),
+                arg_type: $arg_type,
+                arg_set: $set_func,
+            },
         }
     };
 }
@@ -75,14 +89,6 @@ lazy_static! {
             ArgExType::Bool(false),
             "Allow duplicate title in a password group, default=false",
             ArgAction::Set,
-            // |config, value| -> Result<(), Box<dyn Error>>{
-            //     if let ArgExType::Bool(v) = value {
-            //         config.storage.allow_duplicate_title = *v;
-            //         Ok(())
-            //     } else {
-            //         box_error!("asdasd {}" , "")
-            //     }
-            // }
             config_set_bool_func!(storage.allow_duplicate_title)
         ),
         arg_ex!(
@@ -156,7 +162,6 @@ pub fn update_config(
     };
     let mut config: Config = toml::from_str(fs::read_to_string(&config_path)?.as_str())?;
     let mut found = false;
-    // TODO: Need improve.
     for arg_ex in CONFIG_ARGS.iter() {
         if arg_ex.arg_name == name {
             found = true;
@@ -168,16 +173,8 @@ pub fn update_config(
                     type_of(&value),
                 )?;
             }
-            match &value {
-                ArgExType::Bool(v) => {
-                    config.storage.allow_duplicate_title = *v;
-                    break;
-                }
-                ArgExType::String(v) => {
-                    break;
-                }
-                _ => (),
-            }
+            (arg_ex.arg_set)(&mut config, &value)?;
+            break;
         }
     }
     if !found {
