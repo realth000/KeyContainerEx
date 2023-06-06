@@ -102,6 +102,24 @@ pub fn add_kdbx_group(
     Ok(())
 }
 
+pub fn remove_kdbx_group(
+    path: Option<&String>,
+    key: &str,
+    group_name: &str,
+) -> Result<(), Box<dyn Error>> {
+    let kdbx_path = match path {
+        Some(path) => PathBuf::from(path),
+        None => get_kdbx_file()?,
+    };
+    let mut database = Database::open(
+        &mut File::open(&kdbx_path)?,
+        DatabaseKey::with_password(key),
+    )?;
+    // TODO: Implement group delete.
+
+    Ok(())
+}
+
 pub fn add_kdbx_entry(
     path: Option<&String>,
     key: &str,
@@ -160,5 +178,16 @@ pub fn add_kdbx_entry(
         &mut OpenOptions::new().write(true).open(&kdbx_path)?,
         DatabaseKey::with_password(key),
     )?;
+    Ok(())
+}
+
+pub fn remove_kdbx_entry(
+    path: Option<&String>,
+    key: &str,
+    group: &str,
+    title: &str,
+    username: &str,
+    password: &str,
+) -> Result<(), Box<dyn Error>> {
     Ok(())
 }

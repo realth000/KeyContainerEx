@@ -104,6 +104,18 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     }
 }
 
+fn handle_remove_command(remove_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+    match remove_matches.subcommand() {
+        Some(("group", group_matches)) => {
+            let group_name = group_matches.get_one::<String>("group").unwrap();
+            println!("[debug] add group {}", group_name);
+            Ok(())
+        }
+        Some(("password", password_matches)) => Ok(()),
+        _ => Ok(()),
+    }
+}
+
 fn handle_config_command(config_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
     for arg in get_config_command_args() {
         if config_matches
@@ -154,6 +166,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let database_arg = Arg::new("database").short('d').long("database");
 
+    let group_arg = Arg::new("group")
+        .short('g')
+        .long("group")
+        .help("Specify a group to save password, by group name");
+
     let matches = Command::new("keyContainer")
         .about("Password manage tool")
         .version("0.1.0")
@@ -183,13 +200,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .subcommand(
                     Command::new("password")
                         .alias("p")
-                        .arg(
-                            Arg::new("group")
-                                .short('g')
-                                .long("group")
-                                .help("Specify a group to save password, by group name"),
-                        )
-                        .arg(title_arg)
+                        .arg(group_arg.clone())
+                        .arg(title_arg.clone())
                         .arg(user_arg.clone())
                         .arg(password_arg.clone()),
                 )
@@ -198,8 +210,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .subcommand(
             Command::new("remove")
-                .arg(user_arg.required(true))
-                .arg(password_arg.required(true)),
+                .about("remove [group | password] from database")
+                .subcommand_required(true)
+                .subcommand(
+                    Command::new("group")
+                        .alias("g")
+                        .about("remove kdbx group, will clear all password and group under it.")
+                        .arg(Arg::new("groupname").index(1).required(true)),
+                )
+                .subcommand(Command::new("password").alias("p").arg(group_arg.clone()))
+                .arg(title_arg.clone())
+                .arg(user_arg),
         )
         .subcommand(
             Command::new("show")
@@ -238,14 +259,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(("add", add_matches)) => {
             return handle_add_command(add_matches);
         }
-        Some(("remove", remove_matches)) => {
-            let username = remove_matches.get_one::<String>("username").unwrap();
-            let password = remove_matches.get_one::<String>("password").unwrap();
-            println!(
-                "[debug] remove: username={}, password={}",
-                username, password
-            )
-        }
+        Some(("remove", remove_matches)) => {}
         Some(("show", show_matches)) => {
             return handle_show_command(show_matches);
         }
