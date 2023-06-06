@@ -9,9 +9,64 @@ use dirs;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
-use crate::arg_ex;
-use crate::box_error;
-use crate::util::{type_of, ArgEx, ArgExType};
+use crate::util::type_of;
+use crate::{arg_ex, box_error};
+
+pub enum ArgExType {
+    Bool(bool),
+    String(String),
+}
+
+pub struct ArgEx {
+    pub arg_name: String,
+    pub arg_value: Arg,
+    pub arg_type: ArgExType,
+    pub arg_set: fn(&mut Config, &ArgExType) -> Result<(), Box<dyn Error>>,
+}
+
+#[macro_export]
+macro_rules! arg_ex {
+    ($name: literal, $arg_type: expr, $help: expr, $action: expr, $set_func: expr) => {
+        ArgEx {
+            arg_name: String::from($name),
+            arg_value: Arg::new($name).long($name).help($help).action($action),
+            arg_type: $arg_type,
+            arg_set: $set_func,
+        }
+    };
+}
+
+macro_rules! config_set_bool_func {
+    ($($config_path: ident).+) => {
+        |config, value| -> Result<(), Box<dyn Error>> {
+            if let ArgExType::Bool(v) = value {
+                config.$($config_path).+ = *v;
+                return Ok(());
+            } else {
+                return box_error!(
+                    "failed to set bool value config, expected bool, got {}",
+                    type_of(&value)
+                )
+            }
+        }
+    };
+}
+
+macro_rules! config_set_string_func {
+    ($($config_path: ident).+) => {
+        |config, value| -> Result<(), Box<dyn Error>> {
+            if let ArgExType::String(v) = value {
+                config.$($config_path).+ = (&v).to_string();
+                return Ok(());
+            } else {
+                return box_error!(
+                    "failed to set string value config, expected bool, got {}",
+                    type_of(&value)
+                )
+            }
+        }
+    };
+}
 
 lazy_static! {
     static ref CONFIG_ARGS: Vec<ArgEx> = vec![
@@ -19,13 +74,23 @@ lazy_static! {
             "allowDuplicateTitle",
             ArgExType::Bool(false),
             "Allow duplicate title in a password group, default=false",
-            ArgAction::Set
+            ArgAction::Set,
+            // |config, value| -> Result<(), Box<dyn Error>>{
+            //     if let ArgExType::Bool(v) = value {
+            //         config.storage.allow_duplicate_title = *v;
+            //         Ok(())
+            //     } else {
+            //         box_error!("asdasd {}" , "")
+            //     }
+            // }
+            config_set_bool_func!(storage.allow_duplicate_title)
         ),
         arg_ex!(
             "databasePath",
             ArgExType::String("".to_string()),
             "Database file path, default is ~/.config",
-            ArgAction::Set
+            ArgAction::Set,
+            config_set_string_func!(kdbx_path)
         ),
     ];
 }
@@ -48,7 +113,7 @@ impl Default for Storage {
 }
 
 #[derive(Deserialize, Serialize)]
-struct Config {
+pub struct Config {
     kdbx_path: String,
     storage: Storage,
 }
@@ -98,13 +163,14 @@ pub fn update_config(
             if arg_ex.arg_type.type_id() != value.type_id() {
                 return box_error!(
                     "invalid config value type for {}: expected {}, got {}",
-                    "allowDuplicate",
+                    &name,
                     type_of(&arg_ex.arg_type),
                     type_of(&value),
                 )?;
             }
             match &value {
                 ArgExType::Bool(v) => {
+                    config.storage.allow_duplicate_title = *v;
                     break;
                 }
                 ArgExType::String(v) => {

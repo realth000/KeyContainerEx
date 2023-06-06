@@ -1,19 +1,7 @@
 use std::io;
 use std::io::Write;
 
-use clap::Arg;
 use rpassword;
-
-pub enum ArgExType {
-    Bool(bool),
-    String(String),
-}
-
-pub struct ArgEx {
-    pub arg_name: String,
-    pub arg_value: Arg,
-    pub arg_type: ArgExType,
-}
 
 #[macro_export]
 macro_rules! box_error {
@@ -57,23 +45,13 @@ pub fn read_password(hint: &str) -> io::Result<String> {
     rpassword::read_password()
 }
 
-#[macro_export]
-macro_rules! arg_ex {
-    ($name: literal, $arg_type: expr, $help: expr, $action: expr) => {
-        ArgEx {
-            arg_name: String::from($name),
-            arg_value: Arg::new($name).long($name).help($help).action($action),
-            arg_type: $arg_type,
-        }
-    };
+macro_rules! arg_vec
+{
+    ($(arg:expr),*) => {
+        vec![$($arg)*]
+    }
 }
 
-// macro_rules! arg_vec {
-//     ($(arg:expr),*) => {
-//         vec![$($arg)*]
-//     }
-// }
-//
 // macro_rules! subcommand {
 //     ($name: expr => $($arg:ident,),*) => {{
 //         let args = arg_vec![$($arg.name, $arg.long, $arg.help, $arg.action),*];

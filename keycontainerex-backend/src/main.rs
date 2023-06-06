@@ -3,12 +3,14 @@ use std::error::Error;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use keepass::db::NodeRef;
 
-use keycontainerex_backend::storage;
-use keycontainerex_backend::util::{self, ArgEx, ArgExType};
+use keycontainerex_backend::storage::config::{get_config_vec, update_config, ArgEx, ArgExType};
+use keycontainerex_backend::storage::init;
+use keycontainerex_backend::storage::kdbx::{add_kdbx_entry, add_kdbx_group, open_kdbx};
+use keycontainerex_backend::util;
 use keycontainerex_backend::{box_error, unwrap_or_return};
 
 fn get_config_command_args() -> &'static Vec<ArgEx> {
-    storage::get_config_vec()
+    get_config_vec()
 }
 
 fn handle_show_command(show_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
@@ -24,7 +26,7 @@ fn handle_show_command(show_matches: &ArgMatches) -> Result<(), Box<dyn Error>> 
     if database.is_some() {
         println!("[debug] show: database={}", database.unwrap());
     }
-    let database = unwrap_or_return!(storage::open_kdbx(database, key));
+    let database = unwrap_or_return!(open_kdbx(database, key));
     for node in &database.root {
         match node {
             NodeRef::Group(g) => {
@@ -56,7 +58,7 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
         Some(("group", group_matches)) => {
             let group_name = group_matches.get_one::<String>("groupname").unwrap();
             println!("[debug] add group {}", group_name);
-            let ret = storage::add_kdbx_group(database, key, group_name);
+            let ret = add_kdbx_group(database, key, group_name);
             if ret.is_err() {
                 return box_error!("failed to add group: {}", ret.unwrap_err().to_string());
             }
@@ -92,7 +94,7 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
                     &password
                 });
             println!("[debug] add username={}, password={}", username, password);
-            let ret = storage::add_kdbx_entry(database, key, group, title, username, password);
+            let ret = add_kdbx_entry(database, key, group, title, username, password);
             if ret.is_err() {
                 return box_error!("failed to add password: {}", ret.unwrap_err().to_string());
             }
@@ -115,12 +117,12 @@ fn handle_config_command(config_matches: &ArgMatches) -> Result<(), Box<dyn Erro
         }
 
         match arg.arg_type {
-            ArgExType::Bool(_) => storage::update_config(
+            ArgExType::Bool(_) => update_config(
                 None,
                 arg.arg_name.as_str(),
                 ArgExType::Bool(config_matches.get_flag(arg.arg_name.as_str())),
             ),
-            ArgExType::String(_) => storage::update_config(
+            ArgExType::String(_) => update_config(
                 None,
                 arg.arg_name.as_str(),
                 ArgExType::String(
@@ -228,7 +230,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(("init", init_matches)) => {
             let database = init_matches.get_one::<String>("database");
             let force = init_matches.get_flag("force");
-            let result = storage::init(database, force);
+            let result = init(database, force);
             if result.is_err() {
                 println!("failed to init: {}", result.err().unwrap());
             }
