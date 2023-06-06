@@ -87,6 +87,13 @@ pub fn add_kdbx_group(
         DatabaseKey::with_password(key),
     )?;
     let group = Group::new(group_name);
+    for node in &database.root.children {
+        if let Node::Group(g) = node {
+            if g.name == group_name {
+                return box_error!("group already exists");
+            }
+        }
+    }
     database.root.children.push(Node::Group(group));
     database.save(
         &mut OpenOptions::new().write(true).open(&kdbx_path)?,
@@ -111,6 +118,19 @@ pub fn add_kdbx_entry(
         &mut File::open(&kdbx_path)?,
         DatabaseKey::with_password(key),
     )?;
+    for node in &database.root.children {
+        if let Node::Group(g) = node {
+            if g.name == group {
+                for n in &g.children {
+                    if let Node::Entry(e) = n {
+                        if e.get_title().unwrap() == title {
+                            return box_error!("title already exists in the same group");
+                        }
+                    }
+                }
+            }
+        }
+    }
     let mut entry = Entry::new();
     entry
         .fields
