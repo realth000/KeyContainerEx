@@ -102,9 +102,6 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
         }
         _ => Ok(()),
     }
-    // let username = add_matches.get_one::<String>("username").unwrap();
-    // let password = add_matches.get_one::<String>("password").unwrap();
-    // println!("[debug] add: username={}, password={}", username, password)
 }
 
 fn handle_config_command(config_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {

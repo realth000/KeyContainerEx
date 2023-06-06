@@ -50,6 +50,7 @@ macro_rules! arg_ex {
     };
 }
 
+// TODO: Optimize these similar macros.
 macro_rules! config_set_bool_func {
     ($($config_path: ident).+) => {
         |config, value| -> Result<(), Box<dyn Error>> {

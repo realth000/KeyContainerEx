@@ -8,16 +8,6 @@ macro_rules! box_error {
     ($($arg:tt)*) => {Err(Box::<dyn Error>::from(format!($($arg)*)))};
 }
 
-// #[macro_export]
-// macro_rules! unwrap_or_return {
-//     ($e:expr, $($msg:literal)*) => {
-//         match $e {
-//             Ok(v) => v,
-//             Err(_) => return box_error!($($msg)*),
-//         }
-//     };
-// }
-
 #[macro_export]
 macro_rules! unwrap_or_return {
     ($e:expr) => {
@@ -44,20 +34,6 @@ pub fn read_password(hint: &str) -> io::Result<String> {
     io::stdout().flush().unwrap();
     rpassword::read_password()
 }
-
-macro_rules! arg_vec
-{
-    ($(arg:expr),*) => {
-        vec![$($arg)*]
-    }
-}
-
-// macro_rules! subcommand {
-//     ($name: expr => $($arg:ident,),*) => {{
-//         let args = arg_vec![$($arg.name, $arg.long, $arg.help, $arg.action),*];
-//         SubCommand::new($name).$(.arg(args.get(stringify!($arg)).unwrap()))*
-//     }};
-// }
 
 pub fn type_of<T>(_: &T) -> &'static str {
     std::any::type_name::<T>()
