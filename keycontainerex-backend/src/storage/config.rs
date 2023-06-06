@@ -55,7 +55,7 @@ macro_rules! config_set_bool_func {
     ($($config_path: ident).+) => {
         |config, value| -> Result<(), Box<dyn Error>> {
             if let ArgExType::Bool(v) = value {
-                config.$($config_path).+ = *v;
+                config.$($config_path).+ = Some(*v);
                 return Ok(());
             } else {
                 return box_error!(
@@ -71,7 +71,7 @@ macro_rules! config_set_string_func {
     ($($config_path: ident).+) => {
         |config, value| -> Result<(), Box<dyn Error>> {
             if let ArgExType::String(v) = value {
-                config.$($config_path).+ = (&v).to_string();
+                config.$($config_path).+ = Some((&v).to_string());
                 return Ok(());
             } else {
                 return box_error!(
@@ -93,6 +93,13 @@ lazy_static! {
             config_set_bool_func!(storage.allow_duplicate_title)
         ),
         arg_ex!(
+            "allowDuplicateGroup",
+            ArgExType::Bool(false),
+            "Allow duplicate group name in database, default=false",
+            ArgAction::Set,
+            config_set_bool_func!(storage.allow_duplicate_group)
+        ),
+        arg_ex!(
             "databasePath",
             ArgExType::String("".to_string()),
             "Database file path, default is ~/.config",
@@ -108,20 +115,22 @@ pub fn get_config_vec() -> &'static Vec<ArgEx> {
 
 #[derive(Deserialize, Serialize)]
 struct Storage {
-    allow_duplicate_title: bool,
+    allow_duplicate_title: Option<bool>,
+    allow_duplicate_group: Option<bool>,
 }
 
 impl Default for Storage {
     fn default() -> Self {
         Storage {
-            allow_duplicate_title: false,
+            allow_duplicate_title: Some(false),
+            allow_duplicate_group: Some(false),
         }
     }
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
-    kdbx_path: String,
+    kdbx_path: Option<String>,
     storage: Storage,
 }
 
@@ -145,7 +154,7 @@ pub fn init_config(path: Option<&String>) -> Result<(), Box<dyn Error>> {
         fs::remove_dir(&config_path)?;
     }
     let config = Config {
-        kdbx_path: config_path.to_str().unwrap().to_string(),
+        kdbx_path: Some(config_path.to_str().unwrap().to_string()),
         storage: Default::default(),
     };
     fs::write(config_path, toml::to_string(&config).unwrap())?;
