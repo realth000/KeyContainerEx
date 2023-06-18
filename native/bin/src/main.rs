@@ -74,7 +74,7 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
             let group = password_matches
                 .get_one::<String>("group")
                 .unwrap_or_else(|| {
-                    group = util::read_line("group: ").unwrap();
+                    group = util::read_line("group (press enter to skip): ").unwrap();
                     &group
                 });
             let title = password_matches

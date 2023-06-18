@@ -127,19 +127,6 @@ pub fn add_kdbx_entry(
         &mut File::open(&kdbx_path)?,
         DatabaseKey::with_password(key),
     )?;
-    for node in &database.root.children {
-        if let Node::Group(g) = node {
-            if g.name == group {
-                for n in &g.children {
-                    if let Node::Entry(e) = n {
-                        if e.get_title().unwrap() == title {
-                            return box_error!("title already exists in the same group");
-                        }
-                    }
-                }
-            }
-        }
-    }
     let mut entry = Entry::new();
     entry
         .fields
@@ -153,16 +140,35 @@ pub fn add_kdbx_entry(
         Value::Protected(password.as_bytes().into()),
     );
 
-    match database.root.get_mut(&[group]) {
-        Some(NodeRefMut::Group(g)) => {
-            g.children.push(Node::Entry(entry));
+    // Allow empty group which means add password under root node.
+    if !group.is_empty() {
+        for node in &database.root.children {
+            if let Node::Group(g) = node {
+                if g.name == group {
+                    for n in &g.children {
+                        if let Node::Entry(e) = n {
+                            if e.get_title().unwrap() == title {
+                                return box_error!("title already exists in the same group");
+                            }
+                        }
+                    }
+                }
+            }
         }
-        Some(NodeRefMut::Entry(_)) => {
-            return box_error!("failed to add password: \"{}\" is an entry", &group);
+
+        match database.root.get_mut(&[group]) {
+            Some(NodeRefMut::Group(g)) => {
+                g.children.push(Node::Entry(entry));
+            }
+            Some(NodeRefMut::Entry(_)) => {
+                return box_error!("failed to add password: \"{}\" is an entry", &group);
+            }
+            None => {
+                return box_error!("failed to add password: group \"{}\" not found", &group);
+            }
         }
-        None => {
-            return box_error!("failed to add password: group \"{}\" not found", &group);
-        }
+    } else {
+        database.root.children.push(Node::Entry(entry));
     }
 
     database.save(
