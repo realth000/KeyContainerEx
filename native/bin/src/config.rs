@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::string::ToString;
 
 use clap::{Arg, ArgAction};
-use dirs;
+
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 

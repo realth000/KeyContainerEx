@@ -7,7 +7,6 @@ use keepass::db::{Entry, Group, Node, NodeRefMut, Value};
 use keepass::{Database, DatabaseKey};
 
 use crate::box_error;
-use crate::util::read_password;
 
 fn get_kdbx_file() -> Result<PathBuf, Box<dyn Error>> {
     match dirs::config_dir() {
@@ -20,7 +19,7 @@ fn get_kdbx_file() -> Result<PathBuf, Box<dyn Error>> {
     }
 }
 
-pub fn init_kdbx(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error>> {
+pub fn init_kdbx(path: Option<&String>, key: &str, force: bool) -> Result<(), Box<dyn Error>> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(&path),
         None => get_kdbx_file()?,
@@ -41,14 +40,6 @@ pub fn init_kdbx(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error
         }
     }
 
-    let password = read_password("Password: ").unwrap();
-    if password.is_empty() {
-        return box_error!("empty password");
-    }
-    let password_confirm = read_password("Confirm password: ").unwrap();
-    if password != password_confirm {
-        return box_error!("password confirm not pass");
-    }
     let db = Database::new(Default::default());
     db.save(
         &mut OpenOptions::new()
@@ -56,7 +47,7 @@ pub fn init_kdbx(path: Option<&String>, force: bool) -> Result<(), Box<dyn Error
             .write(true)
             .truncate(true)
             .open(&kdbx_path)?,
-        DatabaseKey::with_password(&password),
+        DatabaseKey::with_password(key),
     )?;
 
     Ok(())

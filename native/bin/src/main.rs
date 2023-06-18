@@ -1,12 +1,14 @@
+mod config;
+mod util;
+
 use std::error::Error;
 
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use keepass::db::NodeRef;
 
-use keycontainerex_backend::storage::config::{get_config_vec, update_config, ArgEx, ArgExType};
+use config::{get_config_vec, update_config, ArgEx, ArgExType};
 use keycontainerex_backend::storage::init;
 use keycontainerex_backend::storage::kdbx::{add_kdbx_entry, add_kdbx_group, open_kdbx};
-use keycontainerex_backend::util;
 use keycontainerex_backend::{box_error, unwrap_or_return};
 
 fn get_config_command_args() -> &'static Vec<ArgEx> {
@@ -185,6 +187,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .help("Force create, will remove the old file if already exists.")
                         .action(ArgAction::SetTrue),
                 )
+                .arg(key_arg.clone())
                 .arg(database_arg.clone()),
         )
         .subcommand(
@@ -248,7 +251,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(("init", init_matches)) => {
             let database = init_matches.get_one::<String>("database");
             let force = init_matches.get_flag("force");
-            let result = init(database, force);
+            let key = match init_matches.get_one::<String>("key") {
+                Some(v) => v.clone(),
+                None => {
+                    let key = util::read_password("Key (database password): ").unwrap();
+                    if key.is_empty() {
+                        return box_error!("empty key");
+                    }
+                    let key_confirm = util::read_password("Confirm key: ").unwrap();
+                    if key != key_confirm {
+                        return box_error!("key and its confirm not the same");
+                    }
+                    key
+                }
+            };
+            let result = init(database, &key, force);
             if result.is_err() {
                 println!("failed to init: {}", result.err().unwrap());
             }

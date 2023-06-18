@@ -648,6 +648,8 @@ dependencies = [
  "dirs",
  "keepass",
  "keycontainerex_backend",
+ "lazy_static",
+ "rpassword",
  "serde",
  "toml",
 ]
@@ -656,14 +658,9 @@ dependencies = [
 name = "keycontainerex_backend"
 version = "0.1.0"
 dependencies = [
- "clap",
  "dirs",
  "flutter_rust_bridge",
  "keepass",
- "lazy_static",
- "rpassword",
- "serde",
- "toml",
 ]
 
 [[package]]
