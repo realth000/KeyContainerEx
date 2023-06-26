@@ -8,6 +8,23 @@ use keepass::{Database, DatabaseKey};
 
 use crate::box_error;
 
+// Parse raw path into vector of string.
+// e.g.
+//   a/b/c/d   => vec!["a", "b", "c", "d"]
+//   a/b\/c/d  => vec!["a", "b/c", "d"]
+//   a/b\\/c/d => vec!["a", "b\\c", "d"]
+//   /a/b/c/d  => vec!["", "b", "c", "d"]
+fn parse_group_path(raw_path: &str) -> Vec<String> {
+    if raw_path.contains('\\') {
+        return raw_path
+            .split('/')
+            .map(String::from)
+            .collect::<Vec<String>>();
+    }
+    let a = raw_path.split('\\/').replace("\\/");
+    vec![]
+}
+
 fn get_kdbx_file() -> Result<PathBuf, Box<dyn Error>> {
     match dirs::config_dir() {
         Some(mut path) => {
