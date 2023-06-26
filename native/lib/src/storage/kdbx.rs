@@ -19,6 +19,10 @@ fn get_kdbx_file() -> Result<PathBuf, Box<dyn Error>> {
     }
 }
 
+pub fn get_default_kdbx_path() -> Result<PathBuf, Box<dyn Error>> {
+    get_kdbx_file()
+}
+
 pub fn init_kdbx(path: Option<&String>, key: &str, force: bool) -> Result<(), Box<dyn Error>> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(&path),
