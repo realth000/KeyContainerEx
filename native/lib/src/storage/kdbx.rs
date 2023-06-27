@@ -154,7 +154,7 @@ pub fn add_kdbx_group(path: Option<&String>, key: &str, group: &str) -> Result<(
         &group_full_path_vec
             .iter()
             .map(|e| e.as_str())
-            .collect::<Vec<_>>(),
+            .collect::<Vec<&str>>(),
     ) {
         Ok(parent) => parent,
         Err(e) => return Err(e),
@@ -218,7 +218,12 @@ pub fn add_kdbx_entry(
 
     // Allow empty group which means add password under root node.
     if !group.is_empty() {
-        match database.root.get_mut(&[group]) {
+        match database.root.get_mut(
+            &parse_group_path(group)
+                .iter()
+                .map(|e| e.as_str())
+                .collect::<Vec<&str>>(),
+        ) {
             Some(NodeRefMut::Group(g)) => {
                 g.children.push(Node::Entry(entry));
             }
