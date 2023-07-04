@@ -8,7 +8,9 @@ use keepass::db::NodeRef;
 
 use config::{get_config_vec, update_config, ArgEx, ArgExType};
 use keycontainerex_backend::storage::init;
-use keycontainerex_backend::storage::kdbx::{add_kdbx_entry, add_kdbx_group, open_kdbx};
+use keycontainerex_backend::storage::kdbx::{
+    add_kdbx_entry, add_kdbx_group, get_default_kdbx_path, open_kdbx,
+};
 use keycontainerex_backend::{box_error, unwrap_or_return};
 
 fn get_config_command_args() -> &'static Vec<ArgEx> {
@@ -249,8 +251,26 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     match matches.subcommand() {
         Some(("init", init_matches)) => {
-            let database = init_matches.get_one::<String>("database");
-            let force = init_matches.get_flag("force");
+            let mut database = init_matches.get_one::<String>("database");
+            let mut force = init_matches.get_flag("force");
+            let default_database = String::from(get_default_kdbx_path()?.to_str().unwrap());
+            if database.is_none() {
+                database = Some(&default_database);
+            }
+
+            if std::path::PathBuf::from(database.unwrap()).exists() {
+                match util::ask_yes_or_no("Database already exists, delete it?") {
+                    Ok(v) => {
+                        if !v {
+                            return Ok(());
+                        }
+                        force = true;
+                    }
+                    Err(e) => {
+                        return box_error!("{}", e);
+                    }
+                }
+            }
             let key = match init_matches.get_one::<String>("key") {
                 Some(v) => v.clone(),
                 None => {
