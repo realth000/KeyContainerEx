@@ -198,13 +198,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .subcommand_required(true)
                 .subcommand(
                     Command::new("group")
-                        .alias("g")
                         .about("add kdbx group, contains entries data")
                         .arg(Arg::new("groupname").index(1).required(true)),
                 )
                 .subcommand(
                     Command::new("password")
-                        .alias("p")
                         .arg(group_arg.clone())
                         .arg(title_arg.clone())
                         .arg(user_arg.clone())
