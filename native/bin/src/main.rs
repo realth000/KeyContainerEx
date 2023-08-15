@@ -1,17 +1,15 @@
-mod config;
-mod util;
-
 use std::error::Error;
 
 use clap::{Arg, ArgAction, ArgMatches, Command};
-use keepass::db::NodeRef;
 
 use config::{get_config_vec, update_config, ArgEx, ArgExType};
-use keycontainerex_backend::storage::init;
-use keycontainerex_backend::storage::kdbx::{
-    add_kdbx_entry, add_kdbx_group, get_default_kdbx_path, open_kdbx,
-};
-use keycontainerex_backend::{box_error, unwrap_or_return};
+use keycontainerex_backend::storage::StorageFormat::Kdbx4;
+use keycontainerex_backend::storage::{add_group, add_password, default_save_path};
+use keycontainerex_backend::storage::{init, show};
+use keycontainerex_backend::{box_error, box_only_error};
+
+mod config;
+mod util;
 
 fn get_config_command_args() -> &'static Vec<ArgEx> {
     get_config_vec()
@@ -30,20 +28,8 @@ fn handle_show_command(show_matches: &ArgMatches) -> Result<(), Box<dyn Error>> 
     if database.is_some() {
         println!("[debug] show: database={}", database.unwrap());
     }
-    let database = unwrap_or_return!(open_kdbx(database, key));
-    for node in &database.root {
-        match node {
-            NodeRef::Group(g) => {
-                println!("Saw group {}", g.name);
-            }
-            NodeRef::Entry(e) => {
-                let title = e.get_title().unwrap_or("(no title)");
-                let username = e.get_username().unwrap_or("(no username)");
-                let password = e.get_password().unwrap_or("(no password)");
-                println!("Entry '{}': '{}' '{}'", title, username, password);
-            }
-        }
-    }
+    let data = show(Kdbx4, database, key)?;
+    println!("{:#?}", data);
     Ok(())
 }
 
@@ -62,11 +48,8 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
         Some(("group", group_matches)) => {
             let group_name = group_matches.get_one::<String>("groupname").unwrap();
             println!("[debug] add group {}", group_name);
-            let ret = add_kdbx_group(database, key, group_name);
-            if ret.is_err() {
-                return box_error!("failed to add group: {}", ret.unwrap_err().to_string());
-            }
-            Ok(())
+            add_group(Kdbx4, database, key, group_name)
+                .map_err(|e| box_only_error!("failed to add group: {}", e))
         }
         Some(("password", password_matches)) => {
             let mut group = String::new();
@@ -98,11 +81,8 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
                     &password
                 });
             println!("[debug] add username={}, password={}", username, password);
-            let ret = add_kdbx_entry(database, key, group, title, username, password);
-            if ret.is_err() {
-                return box_error!("failed to add password: {}", ret.unwrap_err().to_string());
-            }
-            Ok(())
+            add_password(Kdbx4, database, key, group, title, username, password)
+                .map_err(|e| box_only_error!("failed to add password: {}", e))
         }
         _ => Ok(()),
     }
@@ -251,7 +231,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(("init", init_matches)) => {
             let mut database = init_matches.get_one::<String>("database");
             let mut force = init_matches.get_flag("force");
-            let default_database = String::from(get_default_kdbx_path()?.to_str().unwrap());
+            let default_database = String::from(default_save_path(Kdbx4)?.to_str().unwrap());
             if database.is_none() {
                 database = Some(&default_database);
             }
@@ -283,7 +263,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     key
                 }
             };
-            let result = init(database, &key, force);
+            let result = init(Kdbx4, database, &key, force);
             if result.is_err() {
                 println!("failed to init: {}", result.err().unwrap());
             }

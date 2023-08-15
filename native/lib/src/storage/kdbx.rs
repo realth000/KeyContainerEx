@@ -7,6 +7,7 @@ use keepass::db::{Entry, Group, Node, NodeRefMut, Value};
 use keepass::{Database, DatabaseKey};
 
 use crate::box_error;
+use crate::storage::{StorageGroup, StoragePassword};
 
 // Parse raw path into vector of string.
 // e.g.
@@ -93,7 +94,11 @@ pub fn get_default_kdbx_path() -> Result<PathBuf, Box<dyn Error>> {
     get_kdbx_file()
 }
 
-pub fn init_kdbx(path: Option<&String>, key: &str, force: bool) -> Result<(), Box<dyn Error>> {
+pub fn init_kdbx(
+    path: Option<&String>,
+    master_key: &str,
+    force: bool,
+) -> Result<(), Box<dyn Error>> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(&path),
         None => get_kdbx_file()?,
@@ -121,31 +126,63 @@ pub fn init_kdbx(path: Option<&String>, key: &str, force: bool) -> Result<(), Bo
             .write(true)
             .truncate(true)
             .open(&kdbx_path)?,
-        DatabaseKey::with_password(key),
+        DatabaseKey::with_password(master_key),
     )?;
 
     Ok(())
 }
 
-pub fn open_kdbx(path: Option<&String>, password: &str) -> Result<Database, Box<dyn Error>> {
+pub fn open_kdbx(path: Option<&String>, master_key: &str) -> Result<Database, Box<dyn Error>> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(path),
         None => get_kdbx_file()?,
     };
     Ok(Database::open(
         &mut File::open(kdbx_path)?,
-        DatabaseKey::with_password(password),
+        DatabaseKey::with_password(master_key),
     )?)
 }
 
-pub fn add_kdbx_group(path: Option<&String>, key: &str, group: &str) -> Result<(), Box<dyn Error>> {
+fn search_kdbx_node(node: &Group, group: &mut StorageGroup) {
+    for node in &node.children {
+        match node {
+            Node::Group(g) => {
+                let mut sg = StorageGroup::new(g.name.clone());
+                search_kdbx_node(g, &mut sg);
+                group.add_sub_group(sg);
+            }
+            Node::Entry(e) => {
+                let title = e.get_title().unwrap_or("(no title)");
+                let username = e.get_username().unwrap_or("(no username)");
+                let password = e.get_password().unwrap_or("(no password)");
+                group.add_sub_password(StoragePassword::new(
+                    title.to_string(),
+                    username.to_string(),
+                    password.to_string(),
+                ));
+            }
+        }
+    }
+}
+
+pub fn show_kdbx(database: Database) -> Result<StorageGroup, Box<dyn Error>> {
+    let mut root_group = StorageGroup::new(database.root.name.clone());
+    search_kdbx_node(&database.root, &mut root_group);
+    Ok(root_group)
+}
+
+pub fn add_kdbx_group(
+    path: Option<&String>,
+    master_key: &str,
+    group: &str,
+) -> Result<(), Box<dyn Error>> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(path),
         None => get_kdbx_file()?,
     };
     let mut database = Database::open(
         &mut File::open(&kdbx_path)?,
-        DatabaseKey::with_password(key),
+        DatabaseKey::with_password(master_key),
     )?;
     let mut group_full_path_vec = parse_group_path(group);
     let group_name = group_full_path_vec.pop().unwrap();
@@ -164,14 +201,14 @@ pub fn add_kdbx_group(path: Option<&String>, key: &str, group: &str) -> Result<(
     group_parent.children.push(Node::Group(g));
     database.save(
         &mut OpenOptions::new().write(true).open(&kdbx_path)?,
-        DatabaseKey::with_password(key),
+        DatabaseKey::with_password(master_key),
     )?;
     Ok(())
 }
 
 pub fn remove_kdbx_group(
     path: Option<&String>,
-    key: &str,
+    master_key: &str,
     group: &str,
 ) -> Result<(), Box<dyn Error>> {
     let kdbx_path = match path {
@@ -180,7 +217,7 @@ pub fn remove_kdbx_group(
     };
     let mut database = Database::open(
         &mut File::open(&kdbx_path)?,
-        DatabaseKey::with_password(key),
+        DatabaseKey::with_password(master_key),
     )?;
     // TODO: Implement group delete.
 
@@ -189,7 +226,7 @@ pub fn remove_kdbx_group(
 
 pub fn add_kdbx_entry(
     path: Option<&String>,
-    key: &str,
+    master_key: &str,
     group: &str,
     title: &str,
     username: &str,
@@ -201,7 +238,7 @@ pub fn add_kdbx_entry(
     };
     let mut database = Database::open(
         &mut File::open(&kdbx_path)?,
-        DatabaseKey::with_password(key),
+        DatabaseKey::with_password(master_key),
     )?;
     let mut entry = Entry::new();
     entry
@@ -238,14 +275,14 @@ pub fn add_kdbx_entry(
 
     database.save(
         &mut OpenOptions::new().write(true).open(&kdbx_path)?,
-        DatabaseKey::with_password(key),
+        DatabaseKey::with_password(master_key),
     )?;
     Ok(())
 }
 
 pub fn remove_kdbx_entry(
     path: Option<&String>,
-    key: &str,
+    master_Key: &str,
     group: &str,
     title: &str,
     username: &str,

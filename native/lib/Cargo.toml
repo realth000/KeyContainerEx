@@ -7,6 +7,7 @@ edition = "2021"
 crate-type = ["lib", "staticlib", "cdylib"]
 
 [dependencies]
+anyhow = "1.0.74"
 dirs = "5.0.1"
 flutter_rust_bridge = "1.77.1"
 keepass = { version = "0.6.1", features = ["save_kdbx4"] }

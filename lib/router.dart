@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:keycontainerex/screens/home.dart';
 import 'package:keycontainerex/screens/settings.dart';
+import 'package:keycontainerex/screens/tools.dart';
 import 'package:keycontainerex/screens/welcome.dart';
 import 'package:keycontainerex/widgets/app_scaffold.dart';
 
@@ -12,6 +13,7 @@ typedef AppBarActionsBuilder = List<Widget>? Function(
 class ScreenPaths {
   static const String welcome = '/';
   static const String home = '/home';
+  static const String tools = '/tools';
   static const String settings = '/settings';
 }
 
@@ -23,6 +25,10 @@ final appRoute = GoRouter(routes: [
   AppRoute(
     path: ScreenPaths.home,
     builder: (state) => const HomePage(),
+  ),
+  AppRoute(
+    path: ScreenPaths.tools,
+    builder: (state) => const ToolsPage(),
   ),
   AppRoute(
     path: ScreenPaths.settings,

@@ -19,17 +19,13 @@ class NavigationBarItem {
 
 final _barItems = <NavigationBarItem>[
   NavigationBarItem(
-    icon: const Icon(Icons.library_music),
-    label: 'Library',
+    icon: const Icon(Icons.key),
+    label: 'Home',
   ),
   NavigationBarItem(
-    icon: const Icon(Icons.queue_music),
-    label: 'Playlist',
+    icon: const Icon(Icons.build),
+    label: 'Tools',
   ),
-  // NavigationBarItem(
-  //   icon: const Icon(Icons.audiotrack),
-  //   label: 'Music',
-  // ),
   NavigationBarItem(
     icon: const Icon(Icons.settings),
     label: 'Settings',
@@ -45,8 +41,8 @@ void gotoTabIndex(BuildContext context, int index) {
       );
     case 1:
       context.go(
-        ScreenPaths.settings,
-        extra: <String, dynamic>{'appBarTitle': 'Settings'},
+        ScreenPaths.tools,
+        extra: <String, dynamic>{'appBarTitle': 'Tools'},
       );
     case 2:
       context.go(

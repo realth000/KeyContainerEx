@@ -4,6 +4,11 @@ macro_rules! box_error {
 }
 
 #[macro_export]
+macro_rules! box_only_error {
+   ($($arg:tt)*) => {Box::<dyn Error>::from(format!($($arg)*))};
+}
+
+#[macro_export]
 macro_rules! unwrap_or_return {
     ($e:expr) => {
         match $e {

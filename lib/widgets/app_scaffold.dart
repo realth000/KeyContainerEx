@@ -34,6 +34,9 @@ class AppScaffold extends ConsumerWidget {
             Expanded(child: body),
           ],
         ),
-        bottomNavigationBar: AppNavigationBar(),
+        bottomNavigationBar:
+            ResponsiveBreakpoints.of(context).smallerThan(DESKTOP)
+                ? AppNavigationBar()
+                : null,
       );
 }
