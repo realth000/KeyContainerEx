@@ -7,6 +7,15 @@ pub extern "C" fn wire_storage_default_save_path(port_: i64, storage_format: i32
 }
 
 #[no_mangle]
+pub extern "C" fn wire_storage_check_init(
+    port_: i64,
+    storage_format: i32,
+    path: *mut wire_uint_8_list,
+) {
+    wire_storage_check_init_impl(port_, storage_format, path)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_storage_init(
     port_: i64,
     storage_format: i32,

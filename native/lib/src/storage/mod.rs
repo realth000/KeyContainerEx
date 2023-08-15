@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::fmt::{Debug, Formatter};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use kdbx::init_kdbx;
 
@@ -140,6 +140,16 @@ pub fn default_save_path(storage_format: StorageFormat) -> Result<PathBuf, Box<d
         StorageFormat::Json => {
             box_error!("Json format not implemented yet")
         }
+    }
+}
+
+pub fn check_init(
+    storage_format: StorageFormat,
+    path: Option<&String>,
+) -> Result<bool, Box<dyn Error>> {
+    match path {
+        Some(v) => Ok(Path::new(v).exists()),
+        None => Ok(default_save_path(storage_format)?.exists()),
     }
 }
 

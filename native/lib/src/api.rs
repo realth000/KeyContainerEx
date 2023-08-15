@@ -1,14 +1,21 @@
 use anyhow::anyhow;
 
 use crate::storage::{
-    add_group, add_password, default_save_path, init, show, StorageFormat, StorageGroup,
+    add_group, add_password, check_init, default_save_path, init, show, StorageFormat, StorageGroup,
 };
 
 pub fn storage_default_save_path(storage_format: StorageFormat) -> anyhow::Result<String> {
     default_save_path(storage_format)
         .map(|v| v.to_str().unwrap().to_string())
         .map_err(|e| anyhow!(e.to_string()))
-        .into()
+}
+
+pub fn storage_check_init(storage_format: StorageFormat, path: String) -> anyhow::Result<bool> {
+    if path.is_empty() {
+        check_init(storage_format, None).map_err(|e| anyhow!(e.to_string()))
+    } else {
+        check_init(storage_format, Some(&path)).map_err(|e| anyhow!(e.to_string()))
+    }
 }
 
 pub fn storage_init(

@@ -16,6 +16,13 @@ abstract class KeycontainerexBackend {
 
   FlutterRustBridgeTaskConstMeta get kStorageDefaultSavePathConstMeta;
 
+  Future<bool> storageCheckInit(
+      {required StorageFormat storageFormat,
+      required String path,
+      dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kStorageCheckInitConstMeta;
+
   Future<void> storageInit(
       {required StorageFormat storageFormat,
       required String path,
@@ -110,6 +117,28 @@ class KeycontainerexBackendImpl implements KeycontainerexBackend {
       const FlutterRustBridgeTaskConstMeta(
         debugName: "storage_default_save_path",
         argNames: ["storageFormat"],
+      );
+
+  Future<bool> storageCheckInit(
+      {required StorageFormat storageFormat,
+      required String path,
+      dynamic hint}) {
+    var arg0 = api2wire_storage_format(storageFormat);
+    var arg1 = _platform.api2wire_String(path);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_storage_check_init(port_, arg0, arg1),
+      parseSuccessData: _wire2api_bool,
+      constMeta: kStorageCheckInitConstMeta,
+      argValues: [storageFormat, path],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kStorageCheckInitConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "storage_check_init",
+        argNames: ["storageFormat", "path"],
       );
 
   Future<void> storageInit(
@@ -245,6 +274,10 @@ class KeycontainerexBackendImpl implements KeycontainerexBackend {
     return raw as String;
   }
 
+  bool _wire2api_bool(dynamic raw) {
+    return raw as bool;
+  }
+
   List<StorageGroup> _wire2api_list_storage_group(dynamic raw) {
     return (raw as List<dynamic>).map(_wire2api_storage_group).toList();
   }
@@ -362,7 +395,7 @@ class KeycontainerexBackendWire implements FlutterRustBridgeWireBase {
       : _lookup = lookup;
 
   void store_dart_post_cobject(
-    int ptr,
+    DartPostCObjectFnType ptr,
   ) {
     return _store_dart_post_cobject(
       ptr,
@@ -370,10 +403,10 @@ class KeycontainerexBackendWire implements FlutterRustBridgeWireBase {
   }
 
   late final _store_dart_post_cobjectPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>(
+      _lookup<ffi.NativeFunction<ffi.Void Function(DartPostCObjectFnType)>>(
           'store_dart_post_cobject');
-  late final _store_dart_post_cobject =
-      _store_dart_post_cobjectPtr.asFunction<void Function(int)>();
+  late final _store_dart_post_cobject = _store_dart_post_cobjectPtr
+      .asFunction<void Function(DartPostCObjectFnType)>();
 
   Object get_dart_object(
     int ptr,
@@ -447,12 +480,31 @@ class KeycontainerexBackendWire implements FlutterRustBridgeWireBase {
   late final _wire_storage_default_save_path =
       _wire_storage_default_save_pathPtr.asFunction<void Function(int, int)>();
 
+  void wire_storage_check_init(
+    int port_,
+    int storage_format,
+    ffi.Pointer<wire_uint_8_list> path,
+  ) {
+    return _wire_storage_check_init(
+      port_,
+      storage_format,
+      path,
+    );
+  }
+
+  late final _wire_storage_check_initPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Int32,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_storage_check_init');
+  late final _wire_storage_check_init = _wire_storage_check_initPtr
+      .asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>)>();
+
   void wire_storage_init(
     int port_,
     int storage_format,
     ffi.Pointer<wire_uint_8_list> path,
     ffi.Pointer<wire_uint_8_list> master_key,
-    ffi.Pointer<bool> force,
+    bool force,
   ) {
     return _wire_storage_init(
       port_,
@@ -465,15 +517,11 @@ class KeycontainerexBackendWire implements FlutterRustBridgeWireBase {
 
   late final _wire_storage_initPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Int64,
-              ffi.Int32,
-              ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<bool>)>>('wire_storage_init');
+          ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_uint_8_list>,
+              ffi.Pointer<wire_uint_8_list>, ffi.Bool)>>('wire_storage_init');
   late final _wire_storage_init = _wire_storage_initPtr.asFunction<
       void Function(int, int, ffi.Pointer<wire_uint_8_list>,
-          ffi.Pointer<wire_uint_8_list>, ffi.Pointer<bool>)>();
+          ffi.Pointer<wire_uint_8_list>, bool)>();
 
   void wire_storage_show(
     int port_,
@@ -609,4 +657,7 @@ final class wire_uint_8_list extends ffi.Struct {
   external int len;
 }
 
-typedef bool = ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Int>)>;
+typedef DartPostCObjectFnType = ffi.Pointer<
+    ffi.NativeFunction<
+        ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message)>>;
+typedef DartPort = ffi.Int64;

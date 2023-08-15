@@ -42,6 +42,24 @@ fn wire_storage_default_save_path_impl(
         },
     )
 }
+fn wire_storage_check_init_impl(
+    port_: MessagePort,
+    storage_format: impl Wire2Api<StorageFormat> + UnwindSafe,
+    path: impl Wire2Api<String> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, bool>(
+        WrapInfo {
+            debug_name: "storage_check_init",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_storage_format = storage_format.wire2api();
+            let api_path = path.wire2api();
+            move |task_callback| storage_check_init(api_storage_format, api_path)
+        },
+    )
+}
 fn wire_storage_init_impl(
     port_: MessagePort,
     storage_format: impl Wire2Api<StorageFormat> + UnwindSafe,
