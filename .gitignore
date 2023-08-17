@@ -1,6 +1,9 @@
 # Miscellaneous
 /lib/**/*.freezed.dart
 /lib/**/*.g.dart
+bridge_generated.dart
+bridge_generated.io.rs
+bridge_generated.rs
 *.class
 *.log
 *.pyc
