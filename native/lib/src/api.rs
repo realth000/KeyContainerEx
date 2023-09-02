@@ -1,16 +1,16 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
 
 use crate::storage::{
     add_group, add_password, check_init, default_save_path, init, show, StorageFormat, StorageGroup,
 };
 
-pub fn storage_default_save_path(storage_format: StorageFormat) -> anyhow::Result<String> {
+pub fn storage_default_save_path(storage_format: StorageFormat) -> Result<String> {
     default_save_path(storage_format)
         .map(|v| v.to_str().unwrap().to_string())
         .map_err(|e| anyhow!(e.to_string()))
 }
 
-pub fn storage_check_init(storage_format: StorageFormat, path: String) -> anyhow::Result<bool> {
+pub fn storage_check_init(storage_format: StorageFormat, path: String) -> Result<bool> {
     if path.is_empty() {
         check_init(storage_format, None).map_err(|e| anyhow!(e.to_string()))
     } else {
@@ -23,7 +23,7 @@ pub fn storage_init(
     path: String,
     master_key: String,
     force: bool,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     if path.is_empty() {
         init(storage_format, None, &master_key, force).map_err(|e| anyhow!(e.to_string()))
     } else {
@@ -35,7 +35,7 @@ pub fn storage_show(
     storage_format: StorageFormat,
     path: String,
     master_key: String,
-) -> anyhow::Result<StorageGroup> {
+) -> Result<StorageGroup> {
     if path.is_empty() {
         show(storage_format, None, &master_key).map_err(|e| anyhow!(e.to_string()))
     } else {
@@ -48,7 +48,7 @@ pub fn storage_add_group(
     path: String,
     master_key: String,
     group: String,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     if path.is_empty() {
         add_group(storage_format, None, &master_key, &group).map_err(|e| anyhow!(e.to_string()))
     } else {
@@ -65,7 +65,7 @@ pub fn storage_add_password(
     title: String,
     username: String,
     password: String,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     if path.is_empty() {
         add_password(
             storage_format,

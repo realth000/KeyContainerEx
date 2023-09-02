@@ -20,7 +20,7 @@ class ScreenPaths {
 final appRoute = GoRouter(routes: [
   AppRoute(
     path: ScreenPaths.welcome,
-    builder: (state) => const WelcomePage(),
+    builder: (state) => WelcomePage(),
   ),
   AppRoute(
     path: ScreenPaths.home,
