@@ -1,2 +1,7 @@
 [workspace]
 members = ["bin", "lib"]
+
+[workspace.dependencies]
+anyhow = { version = "1.0.75" }
+
+workspace.resolver = "2"

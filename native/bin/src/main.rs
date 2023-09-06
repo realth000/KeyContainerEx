@@ -1,12 +1,10 @@
-use std::error::Error;
-
+use anyhow::{bail, Context, Result};
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
 use config::{get_config_vec, update_config, ArgEx, ArgExType};
 use keycontainerex_backend::storage::StorageFormat::Kdbx4;
 use keycontainerex_backend::storage::{add_group, add_password, default_save_path};
 use keycontainerex_backend::storage::{init, show};
-use keycontainerex_backend::{box_error, box_only_error};
 
 mod config;
 mod util;
@@ -15,7 +13,7 @@ fn get_config_command_args() -> &'static Vec<ArgEx> {
     get_config_vec()
 }
 
-fn handle_show_command(show_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+fn handle_show_command(show_matches: &ArgMatches) -> Result<()> {
     let show_all = show_matches.get_flag("all");
     println!("[debug] show: show_all={}", show_all);
     let default_key = String::from("");
@@ -33,7 +31,7 @@ fn handle_show_command(show_matches: &ArgMatches) -> Result<(), Box<dyn Error>> 
     Ok(())
 }
 
-fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+fn handle_add_command(add_matches: &ArgMatches) -> Result<()> {
     let database = add_matches.get_one::<String>("database");
     if database.is_some() {
         println!("[debug] add: database={}", database.unwrap());
@@ -48,8 +46,7 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
         Some(("group", group_matches)) => {
             let group_name = group_matches.get_one::<String>("groupname").unwrap();
             println!("[debug] add group {}", group_name);
-            add_group(Kdbx4, database, key, group_name)
-                .map_err(|e| box_only_error!("failed to add group: {}", e))
+            add_group(Kdbx4, database, key, group_name).context("failed to add group")
         }
         Some(("password", password_matches)) => {
             let mut group = String::new();
@@ -82,13 +79,13 @@ fn handle_add_command(add_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
                 });
             println!("[debug] add username={}, password={}", username, password);
             add_password(Kdbx4, database, key, group, title, username, password)
-                .map_err(|e| box_only_error!("failed to add password: {}", e))
+                .context("failed to add password: {}")
         }
         _ => Ok(()),
     }
 }
 
-fn handle_remove_command(remove_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+fn handle_remove_command(remove_matches: &ArgMatches) -> Result<()> {
     match remove_matches.subcommand() {
         Some(("group", group_matches)) => {
             let group_name = group_matches.get_one::<String>("group").unwrap();
@@ -100,7 +97,7 @@ fn handle_remove_command(remove_matches: &ArgMatches) -> Result<(), Box<dyn Erro
     }
 }
 
-fn handle_config_command(config_matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+fn handle_config_command(config_matches: &ArgMatches) -> Result<()> {
     for arg in get_config_command_args() {
         if config_matches
             .value_source(arg.arg_value.get_id().as_str())
@@ -114,7 +111,7 @@ fn handle_config_command(config_matches: &ArgMatches) -> Result<(), Box<dyn Erro
                 None,
                 arg.arg_name.as_str(),
                 ArgExType::Bool(config_matches.get_flag(arg.arg_name.as_str())),
-            ),
+            )?,
             ArgExType::String(_) => update_config(
                 None,
                 arg.arg_name.as_str(),
@@ -124,13 +121,13 @@ fn handle_config_command(config_matches: &ArgMatches) -> Result<(), Box<dyn Erro
                         .unwrap()
                         .to_owned(),
                 ),
-            ),
-        }?
+            )?,
+        }
     }
     Ok(())
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     let title_arg = Arg::new("title")
         .short('t')
         .long("title")
@@ -245,7 +242,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         force = true;
                     }
                     Err(e) => {
-                        return box_error!("{}", e);
+                        bail!("{}", e)
                     }
                 }
             }
@@ -254,11 +251,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 None => {
                     let key = util::read_password("Key (database password): ").unwrap();
                     if key.is_empty() {
-                        return box_error!("empty key");
+                        bail!("empty key")
                     }
                     let key_confirm = util::read_password("Confirm key: ").unwrap();
                     if key != key_confirm {
-                        return box_error!("key and its confirm not the same");
+                        bail!("key and its confirm not the same")
                     }
                     key
                 }

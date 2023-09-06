@@ -1,12 +1,11 @@
-use std::error::Error;
 use std::fs::{self, File, OpenOptions};
 use std::path::PathBuf;
 
+use anyhow::{bail, Result};
 use dirs;
 use keepass::db::{Entry, Group, Node, NodeRefMut, Value};
 use keepass::{Database, DatabaseKey};
 
-use crate::box_error;
 use crate::storage::{StorageGroup, StoragePassword};
 
 // Parse raw path into vector of string.
@@ -49,14 +48,11 @@ fn parse_group_path(raw_path: &str) -> Vec<String> {
     group_path_vec
 }
 
-fn locate_group_node<'a>(
-    node: &'a mut Group,
-    path_vec: &[&str],
-) -> Result<&'a mut Group, Box<dyn Error>> {
+fn locate_group_node<'a>(node: &'a mut Group, path_vec: &[&str]) -> Result<&'a mut Group> {
     return if let Some(NodeRefMut::Group(g)) = node.get_mut(path_vec) {
         Ok(g)
     } else {
-        box_error!("failed to found")
+        bail!("failed to found")
     };
 
     // let mut current_node: &mut Group = node;
@@ -79,33 +75,29 @@ fn locate_group_node<'a>(
     // Ok(current_node)
 }
 
-fn get_kdbx_file() -> Result<PathBuf, Box<dyn Error>> {
+fn get_kdbx_file() -> Result<PathBuf> {
     match dirs::config_dir() {
         Some(mut path) => {
             path.push("KeyContainerEx");
             path.push("default.kdbx");
             Ok(path)
         }
-        _ => box_error!("failed to get kdbx path"),
+        _ => bail!("failed to get kdbx path"),
     }
 }
 
-pub fn get_default_kdbx_path() -> Result<PathBuf, Box<dyn Error>> {
+pub fn get_default_kdbx_path() -> Result<PathBuf> {
     get_kdbx_file()
 }
 
-pub fn init_kdbx(
-    path: Option<&String>,
-    master_key: &str,
-    force: bool,
-) -> Result<(), Box<dyn Error>> {
+pub fn init_kdbx(path: Option<&String>, master_key: &str, force: bool) -> Result<()> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(&path),
         None => get_kdbx_file()?,
     };
     if kdbx_path.exists() {
         if !force {
-            return box_error!("file already exists");
+            return bail!("file already exists");
         }
         if fs::metadata(&kdbx_path)?.is_dir() {
             fs::remove_dir(&kdbx_path)?;
@@ -132,7 +124,7 @@ pub fn init_kdbx(
     Ok(())
 }
 
-pub fn open_kdbx(path: Option<&String>, master_key: &str) -> Result<Database, Box<dyn Error>> {
+pub fn open_kdbx(path: Option<&String>, master_key: &str) -> Result<Database> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(path),
         None => get_kdbx_file()?,
@@ -165,17 +157,13 @@ fn search_kdbx_node(node: &Group, group: &mut StorageGroup) {
     }
 }
 
-pub fn show_kdbx(database: Database) -> Result<StorageGroup, Box<dyn Error>> {
+pub fn show_kdbx(database: Database) -> Result<StorageGroup> {
     let mut root_group = StorageGroup::new(database.root.name.clone());
     search_kdbx_node(&database.root, &mut root_group);
     Ok(root_group)
 }
 
-pub fn add_kdbx_group(
-    path: Option<&String>,
-    master_key: &str,
-    group: &str,
-) -> Result<(), Box<dyn Error>> {
+pub fn add_kdbx_group(path: Option<&String>, master_key: &str, group: &str) -> Result<()> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(path),
         None => get_kdbx_file()?,
@@ -206,11 +194,7 @@ pub fn add_kdbx_group(
     Ok(())
 }
 
-pub fn remove_kdbx_group(
-    path: Option<&String>,
-    master_key: &str,
-    group: &str,
-) -> Result<(), Box<dyn Error>> {
+pub fn remove_kdbx_group(path: Option<&String>, master_key: &str, group: &str) -> Result<()> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(path),
         None => get_kdbx_file()?,
@@ -231,7 +215,7 @@ pub fn add_kdbx_entry(
     title: &str,
     username: &str,
     password: &str,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     let kdbx_path = match path {
         Some(path) => PathBuf::from(path),
         None => get_kdbx_file()?,
@@ -266,7 +250,7 @@ pub fn add_kdbx_entry(
             }
             Some(NodeRefMut::Entry(_)) => {}
             None => {
-                return box_error!("failed to add password: group \"{}\" not found", &group);
+                return bail!("failed to add password: group \"{}\" not found", &group);
             }
         }
     } else {
@@ -287,6 +271,6 @@ pub fn remove_kdbx_entry(
     title: &str,
     username: &str,
     password: &str,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     Ok(())
 }

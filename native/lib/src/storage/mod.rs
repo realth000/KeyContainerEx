@@ -1,10 +1,10 @@
-use std::error::Error;
 use std::fmt::{Debug, Formatter};
 use std::path::{Path, PathBuf};
 
+use anyhow::{bail, Result};
+
 use kdbx::init_kdbx;
 
-use crate::box_error;
 use crate::storage::kdbx::{
     add_kdbx_entry, add_kdbx_group, get_default_kdbx_path, open_kdbx, show_kdbx,
 };
@@ -101,7 +101,7 @@ impl StorageGroup {
                         false => continue,
                     }
                 }
-                return false;
+                false
             }
         }
     }
@@ -134,19 +134,16 @@ impl StoragePassword {
     }
 }
 
-pub fn default_save_path(storage_format: StorageFormat) -> Result<PathBuf, Box<dyn Error>> {
+pub fn default_save_path(storage_format: StorageFormat) -> Result<PathBuf> {
     match storage_format {
         StorageFormat::Kdbx4 => get_default_kdbx_path(),
         StorageFormat::Json => {
-            box_error!("Json format not implemented yet")
+            bail!("Json format not implemented yet")
         }
     }
 }
 
-pub fn check_init(
-    storage_format: StorageFormat,
-    path: Option<&String>,
-) -> Result<bool, Box<dyn Error>> {
+pub fn check_init(storage_format: StorageFormat, path: Option<&String>) -> Result<bool> {
     match path {
         Some(v) => Ok(Path::new(v).exists()),
         None => Ok(default_save_path(storage_format)?.exists()),
@@ -158,11 +155,11 @@ pub fn init(
     path: Option<&String>,
     master_key: &str,
     force: bool,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     match storage_format {
         StorageFormat::Kdbx4 => init_kdbx(path, master_key, force),
         StorageFormat::Json => {
-            box_error!("Json format not implemented yet")
+            bail!("Json format not implemented yet")
         }
     }
 }
@@ -171,14 +168,14 @@ pub fn show(
     storage_format: StorageFormat,
     path: Option<&String>,
     master_key: &str,
-) -> Result<StorageGroup, Box<dyn Error>> {
+) -> Result<StorageGroup> {
     match storage_format {
         StorageFormat::Kdbx4 => {
             let database = open_kdbx(path, master_key)?;
             show_kdbx(database)
         }
         StorageFormat::Json => {
-            box_error!("Json format not implemented yet")
+            bail!("Json format not implemented yet")
         }
     }
 }
@@ -188,11 +185,11 @@ pub fn add_group(
     path: Option<&String>,
     master_key: &str,
     group: &str,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     match storage_format {
         StorageFormat::Kdbx4 => add_kdbx_group(path, master_key, group),
         StorageFormat::Json => {
-            box_error!("Json format not implemented yet")
+            bail!("Json format not implemented yet")
         }
     }
 }
@@ -205,11 +202,11 @@ pub fn add_password(
     title: &str,
     username: &str,
     password: &str,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     match storage_format {
         StorageFormat::Kdbx4 => add_kdbx_entry(path, master_key, group, title, username, password),
         StorageFormat::Json => {
-            box_error!("Json format not implemented yet")
+            bail!("Json format not implemented yet")
         }
     }
 }

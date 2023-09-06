@@ -1,18 +1,18 @@
 use std::any::Any;
-use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
 use std::string::ToString;
 
+use anyhow::Result;
+use anyhow::{bail, Context};
 use clap::{Arg, ArgAction};
-
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 
+use crate::arg_ex;
 use crate::util::type_of;
-use crate::{arg_ex, box_error};
 
-type ArgExSetFn = fn(&mut Config, &ArgExType) -> Result<(), Box<dyn Error>>;
+type ArgExSetFn = fn(&mut Config, &ArgExType) -> Result<()>;
 
 pub enum ArgExType {
     Bool(bool),
@@ -53,12 +53,12 @@ macro_rules! arg_ex {
 // TODO: Optimize these similar macros.
 macro_rules! config_set_bool_func {
     ($($config_path: ident).+) => {
-        |config, value| -> Result<(), Box<dyn Error>> {
+        |config, value| -> Result<()> {
             if let ArgExType::Bool(v) = value {
                 config.$($config_path).+ = Some(*v);
-                return Ok(());
+                Ok(())
             } else {
-                return box_error!(
+                bail!(
                     "failed to set bool value config, expected bool, got {}",
                     type_of(&value)
                 )
@@ -69,12 +69,12 @@ macro_rules! config_set_bool_func {
 
 macro_rules! config_set_string_func {
     ($($config_path: ident).+) => {
-        |config, value| -> Result<(), Box<dyn Error>> {
+        |config, value| -> Result<()> {
             if let ArgExType::String(v) = value {
                 config.$($config_path).+ = Some((&v).to_string());
-                return Ok(());
+                Ok(())
             } else {
-                return box_error!(
+                bail!(
                     "failed to set string value config, expected bool, got {}",
                     type_of(&value)
                 )
@@ -134,18 +134,14 @@ pub struct Config {
     storage: Storage,
 }
 
-fn get_config_file() -> Result<PathBuf, Box<dyn Error>> {
-    match dirs::config_dir() {
-        Some(mut path) => {
-            path.push("KeyContainerEx");
-            path.push("config.toml");
-            Ok(path)
-        }
-        _ => box_error!("failed to get config path"),
-    }
+fn get_config_file() -> Result<PathBuf> {
+    let mut path = dirs::config_dir().context("failed to get config path")?;
+    path.push("KeyContainerEx");
+    path.push("config.toml");
+    Ok(path)
 }
 
-pub fn init_config(path: Option<&String>) -> Result<(), Box<dyn Error>> {
+pub fn init_config(path: Option<&String>) -> Result<()> {
     let config_path = match path {
         Some(path) => PathBuf::from(path),
         None => get_config_file()?,
@@ -161,11 +157,7 @@ pub fn init_config(path: Option<&String>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn update_config(
-    path: Option<&String>,
-    name: &str,
-    value: ArgExType,
-) -> Result<(), Box<dyn Error>> {
+pub fn update_config(path: Option<&String>, name: &str, value: ArgExType) -> Result<()> {
     let config_path = match path {
         Some(path) => PathBuf::from(path),
         None => get_config_file()?,
@@ -176,19 +168,19 @@ pub fn update_config(
         if arg_ex.arg_name == name {
             found = true;
             if arg_ex.arg_type.type_id() != value.type_id() {
-                return box_error!(
+                bail!(
                     "invalid config value type for {}: expected {}, got {}",
                     &name,
                     type_of(&arg_ex.arg_type),
                     type_of(&value),
-                )?;
+                )
             }
             (arg_ex.arg_set)(&mut config, &value)?;
             break;
         }
     }
     if !found {
-        return box_error!("config not found: {}", name);
+        bail!("config not found: {}", name)
     }
     fs::write(config_path, toml::to_string(&config).unwrap())?;
     Ok(())

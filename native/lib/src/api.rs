@@ -1,20 +1,18 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 use crate::storage::{
     add_group, add_password, check_init, default_save_path, init, show, StorageFormat, StorageGroup,
 };
 
 pub fn storage_default_save_path(storage_format: StorageFormat) -> Result<String> {
-    default_save_path(storage_format)
-        .map(|v| v.to_str().unwrap().to_string())
-        .map_err(|e| anyhow!(e.to_string()))
+    default_save_path(storage_format).map(|v| v.to_str().unwrap().to_string())
 }
 
 pub fn storage_check_init(storage_format: StorageFormat, path: String) -> Result<bool> {
     if path.is_empty() {
-        check_init(storage_format, None).map_err(|e| anyhow!(e.to_string()))
+        check_init(storage_format, None)
     } else {
-        check_init(storage_format, Some(&path)).map_err(|e| anyhow!(e.to_string()))
+        check_init(storage_format, Some(&path))
     }
 }
 
@@ -25,9 +23,9 @@ pub fn storage_init(
     force: bool,
 ) -> Result<()> {
     if path.is_empty() {
-        init(storage_format, None, &master_key, force).map_err(|e| anyhow!(e.to_string()))
+        init(storage_format, None, &master_key, force)
     } else {
-        init(storage_format, Some(&path), &master_key, force).map_err(|e| anyhow!(e.to_string()))
+        init(storage_format, Some(&path), &master_key, force)
     }
 }
 
@@ -37,9 +35,9 @@ pub fn storage_show(
     master_key: String,
 ) -> Result<StorageGroup> {
     if path.is_empty() {
-        show(storage_format, None, &master_key).map_err(|e| anyhow!(e.to_string()))
+        show(storage_format, None, &master_key)
     } else {
-        show(storage_format, Some(&path), &master_key).map_err(|e| anyhow!(e.to_string()))
+        show(storage_format, Some(&path), &master_key)
     }
 }
 
@@ -50,10 +48,9 @@ pub fn storage_add_group(
     group: String,
 ) -> Result<()> {
     if path.is_empty() {
-        add_group(storage_format, None, &master_key, &group).map_err(|e| anyhow!(e.to_string()))
+        add_group(storage_format, None, &master_key, &group)
     } else {
         add_group(storage_format, Some(&path), &master_key, &group)
-            .map_err(|e| anyhow!(e.to_string()))
     }
 }
 
@@ -76,7 +73,6 @@ pub fn storage_add_password(
             &username,
             &password,
         )
-        .map_err(|e| anyhow!(e.to_string()))
     } else {
         add_password(
             storage_format,
@@ -87,6 +83,5 @@ pub fn storage_add_password(
             &username,
             &password,
         )
-        .map_err(|e| anyhow!(e.to_string()))
     }
 }
