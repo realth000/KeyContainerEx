@@ -6,8 +6,7 @@ import 'package:keycontainerex/bridge_generated.dart';
 import 'package:keycontainerex/constants.dart';
 import 'package:keycontainerex/ffi.dart';
 import 'package:keycontainerex/router.dart';
-
-import '../utils/debug.dart';
+import 'package:keycontainerex/utils/debug.dart';
 
 class WelcomePage extends ConsumerWidget {
   WelcomePage({super.key});

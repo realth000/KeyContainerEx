@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'app_state_provider.freezed.dart';
-part 'app_state_provider.g.dart';
+part '../generated/provider/app_state_provider.freezed.dart';
+part '../generated/provider/app_state_provider.g.dart';
 
 @freezed
 class State with _$State {
