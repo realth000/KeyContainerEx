@@ -24,7 +24,7 @@ final appRoute = GoRouter(routes: [
   ),
   AppRoute(
     path: ScreenPaths.home,
-    builder: (state) => const HomePage(),
+    builder: HomePage.new,
   ),
   AppRoute(
     path: ScreenPaths.tools,

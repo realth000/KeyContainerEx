@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
-import 'package:keycontainerex/bridge_generated.dart';
 import 'package:keycontainerex/constants.dart';
 import 'package:keycontainerex/ffi.dart';
+import 'package:keycontainerex/generated/bridge_generated.dart';
 import 'package:keycontainerex/router.dart';
 import 'package:keycontainerex/utils/debug.dart';
 
@@ -137,13 +137,18 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
                         );
                       } else {
                         try {
-                          final _ = await api.storageShow(
+                          final storageGroups = await api.storageShow(
                             storageFormat: StorageFormat.Kdbx4,
                             path: '',
                             masterKey: widget.masterKeyController.text,
                           );
                           if (context.mounted) {
-                            context.go(ScreenPaths.home);
+                            context.go(
+                              ScreenPaths.home,
+                              extra: <String, dynamic>{
+                                'storageGroup': storageGroups
+                              },
+                            );
                           }
                         } on FfiException catch (e) {
                           if (e.code == errRustResultError) {
